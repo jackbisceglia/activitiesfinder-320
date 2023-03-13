@@ -1,5 +1,4 @@
 import express from "express";
-import userDataLayer from "./data/user.js";
 import userRouter from "./routes/users.js";
 
 // init app
