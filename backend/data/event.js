@@ -32,3 +32,5 @@ class Event {
         }
     }
 }
+
+console.log("Hello World")
