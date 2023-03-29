@@ -2,10 +2,13 @@ class Event {
 
     constructor(eventId, title, time, location, eventUrl, eventImage, tags, saves){
         //mandatory
+        if(eventId === undefined || title === undefined || time === undefined || location === undefined || eventUrl === undefined || saves === undefined){
+            throw new Error("A Mandatory Parameter is Undefined");
+        }
         this.eventId = eventId; //number
         this.title = title; //String
         this.time = time; //String
-        this.location = location; //Location object (JSON)
+        this.location = location; //Location object (JSON) => {town: "Amherst" , building: "Mullins"}
         this.eventUrl = eventUrl; //String
         this.saves = saves; //number
 
@@ -33,7 +36,8 @@ class Event {
     setImage = (newImg) => {this.image = newImg};
 
     getSaves = () => this.saves;
-    setSaves = (newCount) => {this.saves = newCount};
+    incrementSaves = () => {this.saves++};
+    decrementSaves = () => {this.saves--};
 
     getTags = () => this.tags;
     setTags = (newTags) => {this.tags = newTags};
@@ -43,7 +47,7 @@ class Event {
 }
 
 // eventId, title, time, location, eventUrl, eventImage, tags, saves
-let e1 = new Event(0, "Test Event", "3:45" , {Town: "Amherst", Building:"Mullins"}, "https://Github.com", undefined, ["basketball", "fun"], 0);
+let e1 = new Event(5, "Test Event", "3:45" , {Town: "Amherst", Building:"Mullins"}, "https://Github.com", undefined, ["basketball", "fun"], 0);
 console.log(e1.getEventId());
 e1.setEventId(11);
 console.log(e1.getEventId());
