@@ -1,12 +1,13 @@
 class Event {
 
-    constructor(eventId, title, time, location, eventUrl, eventImage, tags){
+    constructor(eventId, title, time, location, eventUrl, eventImage, tags, saves){
         //mandatory
         this.eventId = eventId; //number
         this.title = title; //String
         this.time = time; //String
         this.location = location; //Location object (JSON)
         this.eventUrl = eventUrl; //String
+        this.saves = saves; //number
 
         //Optional
         this.tags = (tags === undefined)? [] : tags; //array
@@ -30,9 +31,18 @@ class Event {
 
     getImage = () => this.image;
     setImage = (newImg) => {this.image = newImg};
+
+    getSaves = () => this.saves;
+    setSaves = (newCount) => {this.saves = newCount};
+
+    getTags = () => this.tags;
+    setTags = (newTags) => {this.tags = newTags};
+
+    addTag = (TagToAdd) => {this.tags.push(TagToAdd)};
+    removeTag = (TagToRemove) => {};
 }
 
-let e1 = new Event(0,"Test Event", "3:45" , {Town: "Amherst", Building:"Mullins"}, ["basketball", "fun"],"Github.com", undefined, undefined);
+let e1 = new Event(0,"Test Event", "3:45" , {Town: "Amherst", Building:"Mullins"}, ["basketball", "fun"],"Github.com", undefined, undefined, 0);
 console.log(e1.getEventId());
 e1.setEventId(11);
 console.log(e1.getEventId());
