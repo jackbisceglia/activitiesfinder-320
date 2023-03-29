@@ -1,4 +1,5 @@
 class Event {
+
     constructor(eventId,title, time, location, eventUrl, eventImage, tags){
         //mandatory
         this.eventId = eventId
@@ -20,7 +21,7 @@ class Event {
             this.eventImage = eventImage
         }
     }
-    
+
     getTitle(){
         return this.title
     }
@@ -31,5 +32,5 @@ class Event {
     getUrl(){return this.eventUrl}
     getImage(){return this.image}
 }
-let event = Event(0,"Test Event",{Town: "Amherst", Building:"Mullins"}, ["basketball", "fun"],"Github.com", undefined, undefined)
-console.log(event.getTitle())
+let e1 = new Event(0,"Test Event","3:45" , {Town: "Amherst", Building:"Mullins"}, ["basketball", "fun"],"Github.com", undefined, undefined)
+console.log(e1.getTitle())
