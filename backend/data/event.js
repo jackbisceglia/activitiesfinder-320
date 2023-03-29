@@ -1,12 +1,9 @@
 class Event {
-    constructor(eventId,title, time, location, eventUrl, eventImage, tags){
-    
-        //mandatory
+    constructor(eventId){
         this.eventId = eventId
         this.title = title
         this.time = time
         this.location = location
-        this.eventUrl = eventUrl
 
         //Optional
         if (tags === undefined) {
@@ -15,29 +12,20 @@ class Event {
         else {
             this.tags = tags
         }
-
         if (eventImage === undefined) {
             this.eventImage = new Image()
         }
         else{
             this.eventImage = eventImage
         }
+
+        if (eventUrl === undefined) {
+            this.eventUrl = ""
+        }
+        else{
+            this.eventUrl = eventUrl
+        }
     }
-
-    getTitle(){
-        return this.title
-    }
-
-    getTime(){
-        return this.time
-    }
-
-    getLocation() {return this.location}
-
-    getUrl(){return this.eventUrl}
-
-    getImage(){return this.image}
 }
 
-let event = Event(0,"Test Event",{Town: "Amherst", Building:"Mullins"}, ["basketball", "fun"],"Github.com", undefined, undefined)
-console.log(event.getTitle())
+console.log("Hello World")
