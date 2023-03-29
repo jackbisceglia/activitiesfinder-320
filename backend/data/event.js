@@ -1,4 +1,5 @@
 class Event {
+    
     constructor(eventId){
         this.eventId = eventId
     }
