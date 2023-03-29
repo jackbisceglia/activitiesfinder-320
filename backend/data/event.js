@@ -46,7 +46,7 @@ class Event {
     removeTag = (TagToRemove) => { this.tags = this.tags.filter(x => x !== TagToRemove); };
 }
 
-// eventId, title, time, location, eventUrl, eventImage, tags, saves
+// order => eventId, title, time, location, eventUrl, eventImage, tags, saves
 let e1 = new Event(5, "Test Event", "3:45" , {Town: "Amherst", Building:"Mullins"}, "https://Github.com", undefined, ["basketball", "fun"], 0);
 console.log(e1.getEventId());
 e1.setEventId(11);
