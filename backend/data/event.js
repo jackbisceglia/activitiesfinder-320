@@ -11,7 +11,7 @@ class Event {
 
         //Optional
         this.tags = (tags === undefined)? [] : tags; //array
-        this.eventImage = (eventImage === undefined)? new Image() : eventImage; //Image object (JSON)
+        this.eventImage = (eventImage === undefined)? {} : eventImage; //Image object (JSON)
     }
 
     getEventId = () => this.eventId;
@@ -39,10 +39,11 @@ class Event {
     setTags = (newTags) => {this.tags = newTags};
 
     addTag = (TagToAdd) => {this.tags.push(TagToAdd)};
-    removeTag = (TagToRemove) => {};
+    removeTag = (TagToRemove) => { this.tags = this.tags.filter(x => x !== TagToRemove); };
 }
 
-let e1 = new Event(0,"Test Event", "3:45" , {Town: "Amherst", Building:"Mullins"}, ["basketball", "fun"],"Github.com", undefined, undefined, 0);
+// eventId, title, time, location, eventUrl, eventImage, tags, saves
+let e1 = new Event(0, "Test Event", "3:45" , {Town: "Amherst", Building:"Mullins"}, "https://Github.com", undefined, ["basketball", "fun"], 0);
 console.log(e1.getEventId());
 e1.setEventId(11);
 console.log(e1.getEventId());
@@ -50,3 +51,6 @@ console.log(e1.getTitle());
 console.log(e1.getTime());
 console.log(e1.getLocation());
 console.log(e1.getUrl());
+console.log(e1.getTags());
+e1.removeTag("basketball");
+console.log(e1.getTags());
