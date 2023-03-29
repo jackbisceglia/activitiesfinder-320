@@ -32,5 +32,6 @@ class Event {
     getUrl(){return this.eventUrl}
     getImage(){return this.image}
 }
+
 let e1 = new Event(0,"Test Event","3:45" , {Town: "Amherst", Building:"Mullins"}, ["basketball", "fun"],"Github.com", undefined, undefined)
 console.log(e1.getTitle())
