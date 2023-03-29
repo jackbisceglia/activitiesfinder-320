@@ -4,7 +4,7 @@ class Event {
         //mandatory
         this.eventId = eventId; //number
         this.title = title; //String
-        this.time = time; //String
+        this.time = time; // {Month: day: , hour: minute:}
         this.location = location; //Location object (JSON)
         this.eventUrl = eventUrl; //String
         this.saves = saves; //number
