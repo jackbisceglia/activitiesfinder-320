@@ -10,7 +10,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <div className={`${Jakarta.className}`}>
       <Navbar />
-      <main className="max-w-screen-lg mx-auto">
+      <main className="max-w-screen-lg mx-auto text-neutral-900">
         <Component {...pageProps} />
       </main>
     </div>
