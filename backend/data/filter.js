@@ -1,9 +1,9 @@
 export default class Filter {
     //time
     constructor(time, location, tags) {
-        this.timeRange = time //{startTime: endTime:}
-        this.location = location//Location object (JSON)
-        this.tags = tags
+        this.timeRange = time; //{startTime: endTime:}
+        this.location = location; //Location object (JSON)
+        this.tags = tags;
     }
 
     getTags = () => this.tags;
@@ -18,18 +18,19 @@ export default class Filter {
     getLocation = () => this.location;
     setLocation = (newLocation) => {this.location = newLocation};
 
-    isCompatible(event) {
+    isCompatible = (event) => {
         if (event.getTime() < this.timeRange.startTime || event.time > this.timeRange.endTime) {
-            return false
+            return false;
         }
         if (this.location.town !== event.getLocation().town) {
-            return false
+            return false;
         }
         return true;
     }
 
-    getScore(event) {
-        if (!this.isCompatible(event)) {return -1}
+    getScore = (event) => {
+        if (!this.isCompatible(event)) {return -1; }
+        
         const filter_set = new Set();
         for (let i = 0; i < this.tags.length; ++i){
             filter_set.add(this.tags[i]);

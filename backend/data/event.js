@@ -12,25 +12,9 @@ class Event {
         this.saves = saves; //number
 
         //Optional
-        if (tags === undefined) {
-            this.tags = []
-        }
-        else {
-            this.tags = tags
-        }
-        if (eventImage === undefined) {
-            this.eventImage = {};
-        }
-        else{
-            this.eventImage = eventImage
-        }
-
-        if (eventUrl === undefined) {
-            this.eventUrl = ""
-        }
-        else{
-            this.eventUrl = eventUrl
-        }
+        this.tags = (tags === undefined)?[]: tags;
+        this.eventImage = (eventImage === undefined)? {}: eventImage;
+        // this.eventUrl = (eventUrl === undefined)? "" : eventUrl;
     }
 
     getEventId = () => this.eventId;
@@ -60,6 +44,9 @@ class Event {
     addTag = (TagToAdd) => {this.tags.push(TagToAdd)};
     removeTag = (TagToRemove) => { this.tags = this.tags.filter(x => x !== TagToRemove); };
 }
+
+
+// ==================== TESTING ===================== //
 
 // eventId, title, time, location, eventUrl, eventImage, tags, saves
 let f1 = new Filter({startTime: 34 , endTime: 40} , {Town: "Amherst", Building: " "} , ["basketball", "fan" , "hello"]);
