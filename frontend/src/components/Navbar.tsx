@@ -8,7 +8,7 @@ type PageData = {
 const pages: PageData[] = [
   { title: "Home", href: "/" },
   { title: "Default Search", href: "/results" },
-  { title: "Search", href: "/search" },
+  { title: "Search", href: "/preferences" },
 ];
 
 const Navbar = () => {
