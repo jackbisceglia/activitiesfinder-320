@@ -1,3 +1,5 @@
+import Filter from './filter.js';
+
 class Event {
 
     constructor(eventId, title, time, location, eventUrl, eventImage, tags, saves){
@@ -17,7 +19,7 @@ class Event {
             this.tags = tags
         }
         if (eventImage === undefined) {
-            this.eventImage = new Image()
+            this.eventImage = {};
         }
         else{
             this.eventImage = eventImage
@@ -60,14 +62,18 @@ class Event {
 }
 
 // eventId, title, time, location, eventUrl, eventImage, tags, saves
-let e1 = new Event(0, "Test Event", "3:45" , {Town: "Amherst", Building:"Mullins"}, "https://Github.com", undefined, ["basketball", "fun"], 0);
-console.log(e1.getEventId());
-e1.setEventId(11);
-console.log(e1.getEventId());
-console.log(e1.getTitle());
+let f1 = new Filter({startTime: 34 , endTime: 40} , {Town: "Amherst", Building: " "} , ["basketball", "fan" , "hello"]);
+let e1 = new Event(0, "Test Event", 37 , {Town: "Amherst", Building:" "}, "https://Github.com", undefined, ["basketball", "fun"], 0);
+// console.log(e1.getEventId());
+// e1.setEventId(11);
+// console.log(e1.getEventId());
+// console.log(e1.getTitle());
 console.log(e1.getTime());
 console.log(e1.getLocation());
-console.log(e1.getUrl());
-console.log(e1.getTags());
-e1.removeTag("basketball");
-console.log(e1.getTags());
+// console.log(e1.getUrl());
+// console.log(e1.getTags());
+// e1.removeTag("basketball");
+// console.log(e1.getTags());
+
+console.log(f1.getScore(e1));
+
