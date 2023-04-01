@@ -43,6 +43,35 @@ class Event {
 
     addTag = (TagToAdd) => {this.tags.push(TagToAdd)};
     removeTag = (TagToRemove) => { this.tags = this.tags.filter(x => x !== TagToRemove); };
+
+    isCompatible = (filter) => {
+        if (this.getTime() < filter.timeRange.startTime || this.getTime() > filter.timeRange.endTime) {
+            return false;
+        }
+        if (filter.getLocation().town !== this.getLocation().town) {
+            return false;
+        }
+        return true;
+    }
+
+    getScore = (filter) => {
+        if (!this.isCompatible(filter)) {return -1; }
+        
+        const filter_set = new Set();
+        let temp = filter.getTags();
+        for (let i = 0; i < temp.length; ++i){
+            filter_set.add(temp[i]);
+        }
+
+        let score = 0;
+        let arr = this.getTags();
+        for (let i = 0; i < arr.length; ++i){
+            if(filter_set.has(arr[i])){
+                score++;
+            }
+        }
+        return score;
+    }
 }
 
 
@@ -55,12 +84,12 @@ let e1 = new Event(0, "Test Event", 37 , {Town: "Amherst", Building:" "}, "https
 // e1.setEventId(11);
 // console.log(e1.getEventId());
 // console.log(e1.getTitle());
-console.log(e1.getTime());
-console.log(e1.getLocation());
+// console.log(e1.getTime());
+// console.log(e1.getLocation());
 // console.log(e1.getUrl());
 // console.log(e1.getTags());
 // e1.removeTag("basketball");
 // console.log(e1.getTags());
 
-console.log(f1.getScore(e1));
+console.log(e1.getScore(f1));
 
