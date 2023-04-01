@@ -49,7 +49,7 @@ export default class Event {
             //console.log("Time out of range");
             return false;
         }
-        if (filter.getLocation().town !== this.getLocation().town) {
+        if (filter.getLocation().Town !== this.getLocation().Town) {
             //console.log("Location out of range");
             return false;
         }
@@ -73,6 +73,14 @@ export default class Event {
             }
         }
         return score;
+    }
+
+    print() {
+        console.log("Event ID: " + this.eventId);
+        console.log("Title: " + this.title);
+        console.log("Time: " + this.time);
+        console.log("Location: " + this.location.Building + ", " + this.location.Town);
+        console.log("Tags: " + this.tags);
     }
 }
 

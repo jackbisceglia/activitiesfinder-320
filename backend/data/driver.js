@@ -20,12 +20,18 @@ let buildings = ["Mullins","STU", "Library"];
 let events = []
 
 for (let i = 0; i < 10; ++i){
-    let location = {Town:towns[rand(0,2)], Building: buildings[rand(0,3)]};
+    let location = {Town: towns[rand(0,2)], Building: buildings[rand(0,3)]};
 
     let numTags = rand(0,5);
     let tags = [];
+    let used = new Set();
     for (let j = 0; j < numTags; ++j) {
-        tags.push(tagsList[rand(0,10)]);
+        let tagToAdd = tagsList[rand(0,10)];
+        if (!used.has(tagToAdd)){
+            tags.push(tagToAdd);
+            used.add(tagToAdd)
+        }
+        
     }
 
     //let e1 = new Event(0, "Test Event", 41 , {Town: "Amherst", Building:" "}, "https://Github.com", undefined, ["basketball", "fun"], 0);
@@ -56,5 +62,10 @@ for (let i = 0; i < events.length; ++i) {
 //Sort the list
 compatibleEvents.sort((a,b) => b.score - a.score);
 console.log("Compatible Events:")
-console.log(compatibleEvents);
+for (let i = 0; i < compatibleEvents.length; ++i) {
+    compatibleEvents[i].event.print();
+    console.log("");
+}
+
+console.log(filter.getTags());
 //console.log("Rand between 30 and 40 " + rand(30,40).toString())
