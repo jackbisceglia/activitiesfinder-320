@@ -1,6 +1,6 @@
 import Filter from './filter.js';
 
-class Event {
+export default class Event {
 
     constructor(eventId, title, time, location, eventUrl, eventImage, tags, saves){
         //mandatory
