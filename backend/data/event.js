@@ -1,5 +1,3 @@
-import Filter from './filter.js';
-
 export default class Event {
 
     constructor(eventId, title, time, location, eventUrl, eventImage, tags, saves){
@@ -40,7 +38,6 @@ export default class Event {
 
     getTags = () => this.tags;
     setTags = (newTags) => {this.tags = newTags};
-
     addTag = (TagToAdd) => {this.tags.push(TagToAdd)};
     removeTag = (TagToRemove) => { this.tags = this.tags.filter(x => x !== TagToRemove); };
 
@@ -75,7 +72,7 @@ export default class Event {
         return score;
     }
 
-    print() {
+    print = () => {
         console.log("Event ID: " + this.eventId);
         console.log("Title: " + this.title);
         console.log("Time: " + this.time);
@@ -83,9 +80,3 @@ export default class Event {
         console.log("Tags: " + this.tags);
     }
 }
-
-
-// ==================== TESTING ===================== //
-
-// eventId, title, time, location, eventUrl, eventImage, tags, saves
-
