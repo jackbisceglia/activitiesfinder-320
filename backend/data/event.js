@@ -46,9 +46,11 @@ export default class Event {
 
     isCompatible = (filter) => {
         if (this.getTime() < filter.timeRange.startTime || this.getTime() > filter.timeRange.endTime) {
+            //console.log("Time out of range");
             return false;
         }
         if (filter.getLocation().town !== this.getLocation().town) {
+            //console.log("Location out of range");
             return false;
         }
         return true;
@@ -78,18 +80,4 @@ export default class Event {
 // ==================== TESTING ===================== //
 
 // eventId, title, time, location, eventUrl, eventImage, tags, saves
-let f1 = new Filter({startTime: 34 , endTime: 40} , {Town: "Amherst", Building: " "} , ["basketball", "fan" , "hello"]);
-let e1 = new Event(0, "Test Event", 37 , {Town: "Amherst", Building:" "}, "https://Github.com", undefined, ["basketball", "fun"], 0);
-// console.log(e1.getEventId());
-// e1.setEventId(11);
-// console.log(e1.getEventId());
-// console.log(e1.getTitle());
-// console.log(e1.getTime());
-// console.log(e1.getLocation());
-// console.log(e1.getUrl());
-// console.log(e1.getTags());
-// e1.removeTag("basketball");
-// console.log(e1.getTags());
-
-console.log(e1.getScore(f1));
 
