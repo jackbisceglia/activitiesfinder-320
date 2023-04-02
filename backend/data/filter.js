@@ -1,7 +1,7 @@
 export default class Filter {
     //time
     constructor(time, location, tags) {
-        this.timeRange = time; //{startTime: endTime:}
+        this.time = time; //{startTime: endTime:}
         this.location = location; //Location object (JSON)
         this.tags = tags;
     }

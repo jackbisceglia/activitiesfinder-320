@@ -1,6 +1,9 @@
 export default class Event {
 
     constructor(eventId, title, time, location, eventUrl, eventImage, tags, saves){
+        if(eventId === undefined || title === undefined || time === undefined || location === undefined || eventUrl === undefined){
+            throw new Error("A Mandatory Parameter is Undefined");
+        }
         //mandatory
         this.eventId = eventId; //number
         this.title = title; //String
@@ -35,6 +38,8 @@ export default class Event {
 
     getSaves = () => this.saves;
     setSaves = (newCount) => {this.saves = newCount};
+    incrementSaves = () => {this.saves++};
+    decrementSaves = () => {this.saves--};
 
     getTags = () => this.tags;
     setTags = (newTags) => {this.tags = newTags};
@@ -42,7 +47,7 @@ export default class Event {
     removeTag = (TagToRemove) => { this.tags = this.tags.filter(x => x !== TagToRemove); };
 
     isCompatible = (filter) => {
-        if (this.getTime() < filter.timeRange.startTime || this.getTime() > filter.timeRange.endTime) {
+        if (this.getTime() < filter.getTime().startTime || this.getTime() > filter.getTime().endTime) {
             //console.log("Time out of range");
             return false;
         }
