@@ -1,4 +1,6 @@
 import { CarIcon, ChevronDown } from "lucide-react";
+
+import { GenericEvent } from "./EventCard";
 import Link from "next/link";
 import React from "react";
 
@@ -7,6 +9,29 @@ type PagePaths = "/" | "/search" | "/results";
 type PageLink = {
   title: string;
   href: PagePaths;
+};
+
+const clearMockEvents = () => {
+  localStorage.removeItem("events");
+};
+
+const addMockEvent = () => {
+  const e: GenericEvent = {
+    id: Math.floor(Math.random() * 1000).toString(),
+    date: Date().toLocaleUpperCase(),
+    location: "Test Location",
+    time: "Test Time",
+    title: `Test Event ${Math.floor(Math.random() * 1000000)}`,
+    url: "https://www.umass.edu/",
+  };
+
+  const eventsFromStorage = localStorage.getItem("events") ?? "";
+
+  const pastEvents = eventsFromStorage.length
+    ? JSON.parse(eventsFromStorage)
+    : [];
+
+  localStorage.setItem("events", JSON.stringify([...pastEvents, e]));
 };
 
 const pages: Record<string, PageLink> = {
@@ -37,6 +62,20 @@ const Navbar = () => {
       </Link>
       {/* LINKS */}
       <ul className="flex gap-8 my-auto">
+        <li className="relative">
+          <button className="flex items-center gap-2 py-2 transition-colors duration-150 text-neutral-900 hover:text-sky-600 peer">
+            DEV TOOLS
+            <ChevronDown />
+          </button>
+          <ul className="hover:flex absolute hidden px-6 pr-12 gap-4 py-5 text-left flex-col rounded-2xl rounded-tr-none shadow-lg w-[16rem] bg-gray-50 top-10 right-3 peer-hover:flex peer-hover:open open:flex">
+            <button onClick={addMockEvent}>
+              <li className="py-2">{"Add Mock Event"}</li>
+            </button>
+            <button onClick={clearMockEvents}>
+              <li className="py-2">{"Clear Mock Event"}</li>
+            </button>
+          </ul>
+        </li>
         <NavLink href={pages.home.href}>
           <li className="py-2">{pages.home.title}</li>
         </NavLink>
