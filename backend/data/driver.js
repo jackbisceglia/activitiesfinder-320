@@ -3,7 +3,7 @@ import Filter from './filter.js';
 
 //User goes to search with a given filter
 //Return list of events in descending order by score
-export function createDummyData(s) {
+function createDummyData(s) {
 
     const rand = (a,b) => Math.floor(Math.random()*(b-a)+a);
     let tagsList = ["outdoors","indoors", "sports", "educational", "reading", "community", "active", "sitting down", "food"];
@@ -54,6 +54,17 @@ export default class Driver{
         return compatibleEvents;
     }
 
+    printSortedEvents = (compatibleEvents , filter) =>{
+        console.log("Filter Tags: ");
+        console.log(filter.getTags());
+        let res = "";
+        res+= "Compatible Events:";
+        for (let i = 0; i < compatibleEvents.length; ++i) {
+            res += compatibleEvents[i].event.print();
+        }
+        return res;
+    }
+
     
 }
 
@@ -63,15 +74,15 @@ export default class Driver{
 
 
 
-const printSortedEvents = (compatibleEvents , filter) =>{
-    console.log("Compatible Events:");
-    for (let i = 0; i < compatibleEvents.length; ++i) {
-        compatibleEvents[i].event.print();
-        console.log("");
-    }
-    console.log("Filter Tags: ");
-    console.log(filter.getTags());
-}
+// const printSortedEvents = (compatibleEvents , filter) =>{
+//     console.log("Compatible Events:");
+//     for (let i = 0; i < compatibleEvents.length; ++i) {
+//         compatibleEvents[i].event.print();
+//         console.log("");
+//     }
+//     console.log("Filter Tags: ");
+//     console.log(filter.getTags());
+// }
 
 // let filter = new Filter({startTime: 32 , endTime: 38} , {Town: "Amherst", Building: " "}, ["basketball", "fan" , "hello", "reading", "food", "active"]);
 // let eventData = createDummyData(10);

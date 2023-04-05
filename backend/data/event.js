@@ -79,6 +79,7 @@ export default class Event {
 
     print = () => {
         let returnString = "";
+        
         // console.log("Event ID: " + this.eventId);
         // console.log("Title: " + this.title);
         // console.log("Time: " + this.time);
@@ -90,6 +91,7 @@ export default class Event {
         returnString += "\nTime: " + this.time;
         returnString += "\nLocation: " + this.location.Building + ", " + this.location.Town;
         returnString += "\nTags: " + this.tags
+        return returnString;
 
     }
 }
