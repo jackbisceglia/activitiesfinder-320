@@ -78,10 +78,18 @@ export default class Event {
     }
 
     print = () => {
-        console.log("Event ID: " + this.eventId);
-        console.log("Title: " + this.title);
-        console.log("Time: " + this.time);
-        console.log("Location: " + this.location.Building + ", " + this.location.Town);
-        console.log("Tags: " + this.tags);
+        let returnString = "";
+        // console.log("Event ID: " + this.eventId);
+        // console.log("Title: " + this.title);
+        // console.log("Time: " + this.time);
+        // console.log("Location: " + this.location.Building + ", " + this.location.Town);
+        // console.log("Tags: " + this.tags);
+
+        returnString += "Event ID: " + this.eventId;
+        returnString += "\nTitle: " + this.title;
+        returnString += "\nTime: " + this.time;
+        returnString += "\nLocation: " + this.location.Building + ", " + this.location.Town;
+        returnString += "\nTags: " + this.tags
+
     }
 }

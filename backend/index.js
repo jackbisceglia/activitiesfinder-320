@@ -1,5 +1,6 @@
 import express from "express";
 import userRouter from "./routes/users.js";
+import eventRouter from "./routes/callEvents.js";
 
 // init app
 const app = express();
@@ -18,7 +19,11 @@ app.get("/", async (req, res) => {
   res.send("Hello World!");
 });
 
+app.use("/events", eventRouter)
+
 // start server listening at port
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
+
+
