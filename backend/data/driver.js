@@ -40,10 +40,10 @@ export default class Driver{
 
     getCompatibleEvents = () => {
         let compatibleEvents = [];
-        for (let i = 0; i < eventData.length; ++i) {
-            let event = eventData[i];
+        for (let i = 0; i < this.eventData.length; ++i) {
+            let event = this.eventData[i];
             //console.log(event)
-            let score = event.getScore(filter);
+            let score = event.getScore(this.filter);
             console.log("Score: " , score);
             if (score != -1){
                 compatibleEvents.push({event: event, score: score});
@@ -73,8 +73,8 @@ const printSortedEvents = (compatibleEvents , filter) =>{
     console.log(filter.getTags());
 }
 
-let filter = new Filter({startTime: 32 , endTime: 38} , {Town: "Amherst", Building: " "}, ["basketball", "fan" , "hello", "reading", "food", "active"]);
-let eventData = createDummyData(10);
-let drive = new Driver(eventData , filter);
-let compatibleEvents = drive.getCompatibleEvents(); //{event: , score:}
-printSortedEvents(compatibleEvents , filter);
+// let filter = new Filter({startTime: 32 , endTime: 38} , {Town: "Amherst", Building: " "}, ["basketball", "fan" , "hello", "reading", "food", "active"]);
+// let eventData = createDummyData(10);
+// let drive = new Driver(eventData , filter);
+// let compatibleEvents = drive.getCompatibleEvents(); //{event: , score:}
+// printSortedEvents(compatibleEvents , filter);
