@@ -14,10 +14,8 @@ export default function Preferences() {
           <span className="ml-2">Outdoor</span>
         </label>
       </div>
-      <Link href="/results">
-        <a className="px-4 py-2 bg-blue-500 text-white font-bold text-center rounded mt-10">
+      <Link href="/results" className="px-4 py-2 bg-blue-500 text-white font-bold text-center rounded mt-10">
           Show Search Results
-        </a>
       </Link>
     </div>
   );
