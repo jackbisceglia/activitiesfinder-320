@@ -1,6 +1,6 @@
 export default class Event {
 
-    constructor(eventId, title, time, location, eventUrl, eventImage, tags, saves){
+    constructor(eventId, title, time, location, eventUrl, imageUrl, tags, saves,area){
         if(eventId === undefined || title === undefined || time === undefined || location === undefined || eventUrl === undefined){
             throw new Error("A Mandatory Parameter is Undefined");
         }
@@ -11,10 +11,10 @@ export default class Event {
         this.location = location; //Location object (JSON)
         this.eventUrl = eventUrl; //String
         this.saves = saves; //number
-
+        this.area = area;
         //Optional
         this.tags = (tags === undefined)?[]: tags;
-        this.eventImage = (eventImage === undefined)? {}: eventImage;
+        this.eventUrl = eventUrl;
         // this.eventUrl = (eventUrl === undefined)? "" : eventUrl;
     }
 
@@ -33,13 +33,16 @@ export default class Event {
     getUrl = () => this.eventUrl;
     setUrl = (newUrl) => {this.Url = newUrl};
 
-    getImage = () => this.image;
-    setImage = (newImg) => {this.image = newImg};
+    getImageUrl = () => this.imageUrl;
+    setImageUrl = (newUrl) => {this.newUrl = newUrl};
 
     getSaves = () => this.saves;
     setSaves = (newCount) => {this.saves = newCount};
     incrementSaves = () => {this.saves++};
     decrementSaves = () => {this.saves--};
+
+    getArea = () => this.area;
+    setArea = (newArea) => {this.area = newArea};
 
     getTags = () => this.tags;
     setTags = (newTags) => {this.tags = newTags};
@@ -55,6 +58,10 @@ export default class Event {
             //console.log("Location out of range");
             return false;
         }
+        
+        if (filter.getArea() == "Outdoors" && this.area != "Outdoors") {return false;}
+
+        if (filter.getArea() == "Indoors" && this.area != "Indoors") {return false;}
         return true;
     }
 
