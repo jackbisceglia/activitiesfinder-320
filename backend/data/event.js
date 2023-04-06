@@ -51,17 +51,23 @@ export default class Event {
 
     isCompatible = (filter) => {
         if (this.getTime() < filter.getTime().startTime || this.getTime() > filter.getTime().endTime) {
-            //console.log("Time out of range");
+            console.log("Time out of range");
             return false;
         }
         if (filter.getLocation().Town !== this.getLocation().Town) {
-            //console.log("Location out of range");
+            console.log("Filter town: " + filter.getLocation().Town + " Event town: " + this.getLocation().Town);
             return false;
         }
         
-        if (filter.getArea() == "Outdoors" && this.area != "Outdoors") {return false;}
+        if (filter.getArea() == "Outdoors" && this.area != "Outdoors") {
+            console.log("Not outdoors");
+            return false;
+        }
 
-        if (filter.getArea() == "Indoors" && this.area != "Indoors") {return false;}
+        if (filter.getArea() == "Indoors" && this.area != "Indoors") {
+            console.log("Not Indoors");
+            return false;
+        }
         return true;
     }
 

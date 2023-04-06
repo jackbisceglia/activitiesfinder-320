@@ -1,12 +1,11 @@
 export default class Filter {
     //time
-    constructor(time, location, tags, area, location) {
+    constructor(time, location, tags, area) {
         this.time = time; //{startTime: endTime:}
         this.location = location; //Location object (JSON)
         this.tags = tags;
         this.area = area;
-        this.location = location;
-        this.type = type;
+
     }
 
     getTags = () => this.tags;

@@ -6,14 +6,15 @@ import Event from './event.js';
 function createDummyData(s) {
 
     const rand = (a,b) => Math.floor(Math.random()*(b-a)+a);
-    let tagsList = ["outdoors","indoors", "sports", "educational", "reading", "community", "active", "sitting down", "food"];
-    let towns = ["Amherst", "Hadley"];
+    let tagsList = [ "Sports", "Music", "Educational"];
+    let towns = ["Amherst", "Hadley", "Sunderland", "Northampton"];
     let buildings = ["Mullins","STU", "Library"];
+    let areas = ["Outdoors", "Indoors", "None"];
     let events = [];
 
     for (let i = 0; i < s; ++i){
-        let location = {Town: towns[rand(0,2)], Building: buildings[rand(0,3)]};
-        let numTags = rand(1,5);
+        let location = {Town: towns[rand(0,4)], Building: buildings[rand(0,3)]};
+        let numTags = rand(0,3);
         let tags = [];
         let used = new Set();
         let count = 0;
@@ -36,6 +37,8 @@ export default class Driver{
     constructor(size, filter){
         this.filter = filter;
         this.eventData = createDummyData(size);
+        //this.eventData = [new Event(0,"Event0", 37, {Town: "Hadley"}, "","",["Educational", "Music"],0,"Indoors")]
+        console.log(this.eventData);
     }
 
     getCompatibleEvents = () => {
