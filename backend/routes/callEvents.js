@@ -10,8 +10,8 @@ eventRouter.get("/", async (req, res) => {
     let filter = new Filter({startTime: 32 , endTime: 38} , {Town: "Amherst", Building: " "}, ["basketball", "fan" , "hello", "reading", "food", "active"]);
     let driver = new Driver(10, filter)
     let comp_events = driver.getCompatibleEvents();
-    let returnString = driver.printSortedEvents(comp_events , filter);
-    res.send(returnString);
+    let returnArr = driver.getSortedEvents(comp_events , filter);
+    res.send(returnArr);
 });
 
 export default eventRouter;

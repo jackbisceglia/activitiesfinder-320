@@ -1,5 +1,5 @@
 import Event from './event.js';
-import Filter from './filter.js';
+// import Filter from './filter.js';
 
 //User goes to search with a given filter
 //Return list of events in descending order by score
@@ -54,13 +54,12 @@ export default class Driver{
         return compatibleEvents;
     }
 
-    printSortedEvents = (compatibleEvents , filter) =>{
+    getSortedEvents = (compatibleEvents , filter) =>{
         console.log("Filter Tags: ");
         console.log(filter.getTags());
-        let res = "";
-        res+= "Compatible Events:";
+        let res = [];
         for (let i = 0; i < compatibleEvents.length; ++i) {
-            res += compatibleEvents[i].event.print();
+            res.push(compatibleEvents[i].event);
         }
         return res;
     }
