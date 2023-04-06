@@ -1,13 +1,14 @@
-import express from "express";
+import cors from "cors";
 // import userRouter from "./routes/users.js";
 import eventRouter from "./routes/callEvents.js";
+import express from "express";
 
 // init app
 const app = express();
 const port = 8080;
 
 // middleware
-// none as of now
+app.use(cors());
 
 // subrouters
 // routers exported from files in /routes will be defined here
@@ -26,5 +27,3 @@ app.use("/events", eventRouter);
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
-
-
