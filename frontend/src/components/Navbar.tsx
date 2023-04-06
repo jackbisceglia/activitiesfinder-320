@@ -34,6 +34,16 @@ const addMockEvent = () => {
   localStorage.setItem("events", JSON.stringify([...pastEvents, e]));
 };
 
+const addMockPreferences = () => {
+  const preferences = ["indoor", "amherst", "sports", "music"];
+
+  localStorage.setItem("preferences", JSON.stringify(preferences));
+};
+
+const clearMockPrefs = () => {
+  localStorage.removeItem("preferences");
+};
+
 const pages: Record<string, PageLink> = {
   home: { title: "Home", href: "/" },
   search: { title: "New Preferences", href: "/search" },
@@ -73,6 +83,13 @@ const Navbar = () => {
             </button>
             <button onClick={clearMockEvents}>
               <li className="py-2">{"Clear Mock Event"}</li>
+            </button>
+            <hr className="border-gray-500" />
+            <button onClick={addMockPreferences}>
+              <li className="py-2">{"Add Mock Prefs"}</li>
+            </button>
+            <button onClick={clearMockPrefs}>
+              <li className="py-2">{"Clear Mock Prefs"}</li>
             </button>
           </ul>
         </li>
