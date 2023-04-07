@@ -11,7 +11,7 @@ eventRouter.get("/", async (req, res) => {
     let driver = new Driver(10, filter);
     let comp_events = driver.getCompatibleEvents();
     let returnArr = driver.getSortedEvents(comp_events , filter);
-    res.send(returnArr);
+    res.json(returnArr);
 });
 
 export default eventRouter;
