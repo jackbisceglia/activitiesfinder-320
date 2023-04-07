@@ -9,24 +9,27 @@ function createDummyData(s) {
     let tagsList = [ "Sports", "Music", "Educational"];
     let towns = ["Amherst", "Hadley", "Sunderland", "Northampton"];
     let buildings = ["Mullins","STU", "Library"];
-    let areas = ["Outdoors", "Indoors", "None"];
+    let areas = ["Outdoors", "Indoors"];
     let events = [];
 
     for (let i = 0; i < s; ++i){
         let location = {Town: towns[rand(0,4)], Building: buildings[rand(0,3)]};
         let numTags = rand(0,3);
+        let area_i = rand(0,2);
         let tags = [];
         let used = new Set();
         let count = 0;
         while(count < numTags) {
-            let tagToAdd = tagsList[rand(0,10)];
+            let idx = rand(0,3);
+            let tagToAdd = tagsList[idx];
             if (!used.has(tagToAdd)){
                 tags.push(tagToAdd);
                 used.add(tagToAdd);
                 count++;
             } 
         }
-        events.push(new Event(i,"Event" + i.toString(), rand(30,40), location, "https://Github.com", undefined, tags, 0));
+        //format => eventId, title, time, location, eventUrl, imageUrl, tags, saves,area
+        events.push(new Event(i,"Event" + i.toString(), rand(30,40), location, "https://Github.com", "" , tags, 0 , areas[area_i]));
     }
     return events;
 }
@@ -38,7 +41,7 @@ export default class Driver{
         this.filter = filter;
         this.eventData = createDummyData(size);
         //this.eventData = [new Event(0,"Event0", 37, {Town: "Hadley"}, "","",["Educational", "Music"],0,"Indoors")]
-        console.log(this.eventData);
+        // console.log(this.eventData);
     }
 
     getCompatibleEvents = () => {
@@ -66,11 +69,8 @@ export default class Driver{
         }
         return res;
     }
-
     
 }
-
-
 
 // ======================= TESTING ========================= //
 

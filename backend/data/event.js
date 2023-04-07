@@ -14,7 +14,7 @@ export default class Event {
         this.area = area;
         //Optional
         this.tags = (tags === undefined)?[]: tags;
-        this.eventUrl = eventUrl;
+        this.imageUrl = imageUrl;
         // this.eventUrl = (eventUrl === undefined)? "" : eventUrl;
     }
 
@@ -58,16 +58,12 @@ export default class Event {
             console.log("Filter town: " + filter.getLocation().Town + " Event town: " + this.getLocation().Town);
             return false;
         }
-        
-        if (filter.getArea() == "Outdoors" && this.area != "Outdoors") {
-            console.log("Not outdoors");
-            return false;
-        }
 
-        if (filter.getArea() == "Indoors" && this.area != "Indoors") {
-            console.log("Not Indoors");
+        if(filter.getArea() !== "None" && filter.getArea() !== this.getArea()){
+            console.log("Area doesn't match");
             return false;
         }
+        
         return true;
     }
 
