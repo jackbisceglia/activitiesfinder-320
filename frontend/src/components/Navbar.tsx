@@ -1,10 +1,12 @@
 import { CarIcon, ChevronDown } from "lucide-react";
+import React, { useEffect, useState } from "react";
 
 import { GenericEvent } from "./EventCard";
 import Link from "next/link";
-import React from "react";
+import { useRouter } from "next/router";
 
-type PagePaths = "/" | "/preferences" | "/results";
+type PagePaths = "/" | "/preferences" | `${"/results"}${string}`;
+
 
 type PageLink = {
   title: string;
@@ -60,6 +62,39 @@ const NavLink = (props: { href: PagePaths; children: React.ReactNode }) => (
 );
 
 const Navbar = () => {
+  const router = useRouter();
+  const [defaultPreferences, setDefaultPreferences] = useState<string[]>([
+    "outdoors",
+    "sports",
+    "music",
+    "amherst",
+  ]);
+
+  const appendParams = (path: PagePaths): PagePaths => {
+    const searchParams = new URLSearchParams();
+
+    defaultPreferences.forEach((pref) => {
+      searchParams.append(pref, "true");
+    });
+
+    return `${path}?${searchParams.toString()}` as PagePaths;
+  };
+
+  const pages: Record<string, PageLink> = {
+    home: { title: "Home", href: "/" },
+    search: { title: "New Preferences", href: "/preferences" },
+    results: {
+      title: "Default Preferences",
+      href: appendParams("/results"),
+    },
+  };
+
+  useEffect(() => {
+    const savedPreferencesOrEmpty = localStorage.getItem("preferences") ?? "[]";
+
+    setDefaultPreferences(() => JSON.parse(savedPreferencesOrEmpty));
+  }, []);
+
   return (
     <nav className="flex justify-between w-full h-20 text-base font-medium bg-transparent shadow-md shadow-black/5 text-neutral-900 px-28">
       {/* <nav className="flex justify-between w-full h-16 text-base font-medium text-neutral-900 px-28"> */}
