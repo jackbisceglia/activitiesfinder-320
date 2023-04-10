@@ -1,7 +1,7 @@
 export default class Event {
 
-    constructor(eventId, title, time, location, eventUrl, imageUrl, tags, saves,area){
-        if(eventId === undefined || title === undefined || time === undefined || location === undefined || eventUrl === undefined){
+    constructor(eventId, title, time, location, eventUrl, imageUrl, tags, saves, area) {
+        if (eventId === undefined || title === undefined || time === undefined || location === undefined || eventUrl === undefined) {
             throw new Error("A Mandatory Parameter is Undefined");
         }
         //mandatory
@@ -13,40 +13,40 @@ export default class Event {
         this.saves = saves; //number
         this.area = area;
         //Optional
-        this.tags = (tags === undefined)?[]: tags;
+        this.tags = (tags === undefined) ? [] : tags;
         this.imageUrl = imageUrl;
         // this.eventUrl = (eventUrl === undefined)? "" : eventUrl;
     }
 
     getEventId = () => this.eventId;
-    setEventId = (newId) => {this.eventId = newId};
+    setEventId = (newId) => { this.eventId = newId };
 
     getTitle = () => this.title;
-    setTitle = (newTitle) => {this.title = newTitle};
+    setTitle = (newTitle) => { this.title = newTitle };
 
     getTime = () => this.time;
-    setTime = (newTime) => {this.time = newTime};
-    
+    setTime = (newTime) => { this.time = newTime };
+
     getLocation = () => this.location;
-    setLocation = (newLocation) => {this.location = newLocation};
+    setLocation = (newLocation) => { this.location = newLocation };
 
     getUrl = () => this.eventUrl;
-    setUrl = (newUrl) => {this.Url = newUrl};
+    setUrl = (newUrl) => { this.Url = newUrl };
 
     getImageUrl = () => this.imageUrl;
-    setImageUrl = (newUrl) => {this.newUrl = newUrl};
+    setImageUrl = (newUrl) => { this.newUrl = newUrl };
 
     getSaves = () => this.saves;
-    setSaves = (newCount) => {this.saves = newCount};
-    incrementSaves = () => {this.saves++};
-    decrementSaves = () => {this.saves--};
+    setSaves = (newCount) => { this.saves = newCount };
+    incrementSaves = () => { this.saves++ };
+    decrementSaves = () => { this.saves-- };
 
     getArea = () => this.area;
-    setArea = (newArea) => {this.area = newArea};
+    setArea = (newArea) => { this.area = newArea };
 
     getTags = () => this.tags;
-    setTags = (newTags) => {this.tags = newTags};
-    addTag = (TagToAdd) => {this.tags.push(TagToAdd)};
+    setTags = (newTags) => { this.tags = newTags };
+    addTag = (TagToAdd) => { this.tags.push(TagToAdd) };
     removeTag = (TagToRemove) => { this.tags = this.tags.filter(x => x !== TagToRemove); };
 
     isCompatible = (filter) => {
@@ -59,27 +59,27 @@ export default class Event {
             return false;
         }
 
-        if(filter.getArea() !== "None" && filter.getArea() !== this.getArea()){
+        if (filter.getArea() !== "None" && filter.getArea() !== this.getArea()) {
             console.log("Area doesn't match");
             return false;
         }
-        
+
         return true;
     }
 
     getScore = (filter) => {
-        if (!this.isCompatible(filter)) {return -1; }
-        
+        if (!this.isCompatible(filter)) { return -1; }
+
         const filter_set = new Set();
         let temp = filter.getTags();
-        for (let i = 0; i < temp.length; ++i){
-            filter_set.add(temp[i]);
+        for (let i = 0; i < temp.length; ++i) {
+            filter_set.add(JSON.stringify(temp[i]));
         }
 
         let score = 0;
         let arr = this.getTags();
-        for (let i = 0; i < arr.length; ++i){
-            if(filter_set.has(arr[i])){
+        for (let i = 0; i < arr.length; ++i) {
+            if (filter_set.has(JSON.stringify(arr[i]))) {
                 score++;
             }
         }
@@ -88,7 +88,7 @@ export default class Event {
 
     print = () => {
         let returnString = "";
-        
+
         // console.log("Event ID: " + this.eventId);
         // console.log("Title: " + this.title);
         // console.log("Time: " + this.time);

@@ -5,62 +5,60 @@ import Event from './event.js';
 //Return list of events in descending order by score
 function createDummyData(s) {
 
-    const rand = (a,b) => Math.floor(Math.random()*(b-a)+a);
-    let tagsList = [ "Sports", "Music", "Educational"];
+    const rand = (a, b) => Math.floor(Math.random() * (b - a) + a);
+    let tagsList = ["Sports", "Music", "Educational"];
     let towns = ["Amherst", "Hadley", "Sunderland", "Northampton"];
-    let buildings = ["Mullins","STU", "Library"];
+    let buildings = ["Mullins", "STU", "Library"];
     let areas = ["Outdoors", "Indoors"];
     let events = [];
 
-    for (let i = 0; i < s; ++i){
-        let location = {Town: towns[rand(0,4)], Building: buildings[rand(0,3)]};
-        let numTags = rand(0,3);
-        let area_i = rand(0,2);
+    for (let i = 0; i < s; ++i) {
+        let location = { Town: towns[rand(0, 4)], Building: buildings[rand(0, 3)] };
+        let numTags = rand(0, 3);
+        let area_i = rand(0, 2);
         let tags = [];
         let used = new Set();
         let count = 0;
-        while(count < numTags) {
-            let idx = rand(0,3);
+        while (count < numTags) {
+            let idx = rand(0, 3);
             let tagToAdd = tagsList[idx];
-            if (!used.has(tagToAdd)){
+            if (!used.has(tagToAdd)) {
                 tags.push(tagToAdd);
                 used.add(tagToAdd);
                 count++;
-            } 
+            }
         }
         //format => eventId, title, time, location, eventUrl, imageUrl, tags, saves,area
-        events.push(new Event(i,"Event" + i.toString(), rand(30,40), location, "https://Github.com", "" , tags, 0 , areas[area_i]));
+        events.push(new Event(i, "Event" + i.toString(), rand(30, 40), location, "https://Github.com", "", tags, 0, areas[area_i]));
     }
     return events;
 }
 
 
-export default class Driver{
+export default class Driver {
 
-    constructor(size, filter){
+    constructor(filter, eventData) {
         this.filter = filter;
-        this.eventData = createDummyData(size);
-        //this.eventData = [new Event(0,"Event0", 37, {Town: "Hadley"}, "","",["Educational", "Music"],0,"Indoors")]
-        // console.log(this.eventData);
+        this.eventData = eventData;
     }
 
     getCompatibleEvents = () => {
         let compatibleEvents = [];
         for (let i = 0; i < this.eventData.length; ++i) {
-            let event = this.eventData[i];
-            //console.log(event)
+            //Time is just some random arbitrary number right now
+            let event = new Event(this.eventData[i].event_id, this.eventData[i].event_name, { startTime: 0, endTime: 20 }, { Town: this.eventData[i].event_town, Building: this.eventData[i].event_location }, this.eventData[i].event_link, "", Object.values(this.eventData[i].event_tags), 0, this.eventData[i].event_area);
             let score = event.getScore(this.filter);
-            console.log("Score: " , score);
-            if (score != -1){
-                compatibleEvents.push({event: event, score: score});
+            console.log("Score: ", score);
+            if (score != -1) {
+                compatibleEvents.push({ event: event, score: score });
             }
         }
         //Sort the list
-        compatibleEvents.sort((a,b) => b.score - a.score);
+        compatibleEvents.sort((a, b) => b.score - a.score);
         return compatibleEvents;
     }
 
-    getSortedEvents = (compatibleEvents , filter) =>{
+    getSortedEvents = (compatibleEvents, filter) => {
         console.log("Filter Tags: ");
         console.log(filter.getTags());
         let res = [];
@@ -69,7 +67,7 @@ export default class Driver{
         }
         return res;
     }
-    
+
 }
 
 // ======================= TESTING ========================= //
