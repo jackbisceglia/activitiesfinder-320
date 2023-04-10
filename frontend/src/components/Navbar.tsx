@@ -4,7 +4,7 @@ import { GenericEvent } from "./EventCard";
 import Link from "next/link";
 import React from "react";
 
-type PagePaths = "/" | "/search" | "/results";
+type PagePaths = "/" | "/preferences" | "/results";
 
 type PageLink = {
   title: string;
@@ -36,7 +36,7 @@ const addMockEvent = () => {
 
 const pages: Record<string, PageLink> = {
   home: { title: "Home", href: "/" },
-  search: { title: "New Preferences", href: "/search" },
+  search: { title: "New Preferences", href: "/preferences" },
   results: { title: "Default Preferences", href: "/results" },
 };
 
