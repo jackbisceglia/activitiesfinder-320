@@ -2,54 +2,7 @@ import { EventCard, GenericEvent } from "@/components/EventCard";
 import { useEffect, useReducer, useState } from "react";
 
 import Link from "next/link";
-
-export type EventActions =
-  | { type: "REMOVE"; payload: { id: string } }
-  | { type: "ADD"; payload: { event: GenericEvent } }
-  | { type: "LOAD_ALL" };
-
-const eventReducer = (
-  events: GenericEvent[],
-  action: EventActions
-): GenericEvent[] => {
-  switch (action.type) {
-    case "REMOVE":
-      const filteredEvents = events.filter((e) => e.id !== action.payload.id);
-      localStorage.setItem("events", JSON.stringify(filteredEvents));
-      return filteredEvents;
-    case "ADD":
-      const newEvents = [...events, action.payload.event];
-      localStorage.setItem("events", JSON.stringify(newEvents));
-      return newEvents;
-    case "LOAD_ALL":
-      return JSON.parse(localStorage.getItem("events") ?? "[]");
-    default:
-      console.log("default");
-      return events;
-  }
-};
-
-// Event State
-const useEventState = () => {
-  const defaultState: GenericEvent[] = [];
-  const [events, dispatchEvents] = useReducer(eventReducer, defaultState);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchEvents = async () => {
-      setLoading(true);
-      dispatchEvents({
-        type: "LOAD_ALL",
-      });
-      setLoading(false);
-    };
-
-    fetchEvents();
-  }, []);
-
-  return { events, loading, error, eventStateDispatch: dispatchEvents };
-};
+import { useEventState } from "@/utils/useSavedEvents";
 
 const FindEventsPanel = ({ hasEvents }: { hasEvents: boolean }) => {
   const fullScreenStyle =

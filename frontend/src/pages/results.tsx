@@ -1,5 +1,7 @@
-import React, { useCallback } from "react";
 import { EventCard, GenericEvent } from "../components/EventCard";
+import React, { useCallback, useEffect, useState } from "react";
+
+import { useEventState } from "@/utils/useSavedEvents";
 
 // Fake search results
 const fakeSearchResults: GenericEvent[] = [
@@ -46,22 +48,25 @@ const fakeSearchResults: GenericEvent[] = [
 ];
 
 export default function Results() {
-  const handleSaveEvent = useCallback((event: GenericEvent) => {
-    console.log("Event saved:", event);
+  const [eventResults, setEventResults] = useState<GenericEvent[]>([]);
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      // write fetching logic here
+      setEventResults(() => fakeSearchResults);
+    };
+
+    fetchResults();
   }, []);
 
   return (
     <div className="text-center">
-      <h1 className="text-4xl mb-10">Search Results</h1>
+      <h1 className="mb-10 text-4xl">Search Results</h1>
       <ul className="space-y-4">
-        {fakeSearchResults.map((result) => (
-          <li key={result.id} className="text-left">
-            <EventCard event={result} showSaveButton onSave={handleSaveEvent} />
-          </li>
+        {eventResults.map((result) => (
+          <EventCard key={result.id} event={result} eventSaved={false} />
         ))}
       </ul>
     </div>
   );
 }
-
-
