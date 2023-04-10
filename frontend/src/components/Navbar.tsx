@@ -7,6 +7,7 @@ import { useRouter } from "next/router";
 
 type PagePaths = "/" | "/preferences" | `${"/results"}${string}`;
 
+
 type PageLink = {
   title: string;
   href: PagePaths;
@@ -43,6 +44,12 @@ const addMockPreferences = () => {
 
 const clearMockPrefs = () => {
   localStorage.removeItem("preferences");
+};
+
+const pages: Record<string, PageLink> = {
+  home: { title: "Home", href: "/" },
+  search: { title: "New Preferences", href: "/preferences" },
+  results: { title: "Default Preferences", href: "/results" },
 };
 
 const NavLink = (props: { href: PagePaths; children: React.ReactNode }) => (

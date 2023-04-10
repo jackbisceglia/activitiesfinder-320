@@ -1,6 +1,4 @@
-import { Dispatch } from "react";
-import { EventActions } from "@/pages";
-import Link from "next/link";
+import React, { useState } from "react";
 
 export type GenericEvent = {
   id: string;
@@ -9,53 +7,40 @@ export type GenericEvent = {
   date: string;
   time: string;
   url: string;
+  saved?: boolean;
 };
 
 type EventCardProps = {
   event: GenericEvent;
-  eventSaved: boolean;
-  eventStateDispatch: Dispatch<EventActions>;
+  showSaveButton?: boolean;
+  onSave?: (event: GenericEvent) => void;
 };
 
-export const EventCard = ({
-  event,
-  eventSaved,
-  eventStateDispatch,
-}: EventCardProps) => {
-  const buttonTerm = eventSaved ? "Remove" : "Save";
+export function EventCard({ event, showSaveButton = false, onSave }: EventCardProps) {
+  const [isSaved, setIsSaved] = useState(event.saved || false);
 
-  // wrap dispatch with id context
-  const handleRemoveEvent = () =>
-    eventStateDispatch({
-      type: "REMOVE",
-      payload: {
-        id: event.id,
-      },
-    });
+  const handleSave = () => {
+    setIsSaved(true);
+    if (onSave) {
+      onSave(event);
+    }
+  };
 
   return (
-    <div
-      className="hover:border-gray-400/60 grid grid-cols-[auto_auto] place-items-start place-content-between px-6 py-4 bg-gray-50/90 border border-gray-300 transition-all duration-200 hover:shadow-md shadow-sm rounded-md text-gray-950 "
-      key={event.id}
-    >
-      <div className="flex flex-col w-max">
-        <Link
-          target="_blank"
-          href={event.url}
-          className="pr-4 text-xl font-black w-fit hover:underline underline-offset-2"
-        >
-          {event.title}
-        </Link>
-        <p>{event.location}</p>
-        <p>{event.date}</p>
-        <p>{event.time}</p>
-      </div>
-      <button
-        onClick={handleRemoveEvent}
-        className="px-4 py-[0.375rem] text-xs transition-all duration-100 bg-gray-400 rounded-md hover:bg-gray-500 text-white w-min h-min"
-      >
-        {buttonTerm}
-      </button>
+    <div className={`border border-gray-200 p-4 rounded-md ${isSaved ? "bg-green-100" : ""}`}>
+      <h2 className="text-xl font-bold mb-2">{event.title}</h2>
+      <p className="text-gray-500 mb-1">{event.location}</p>
+      <p className="mb-2">
+        {event.date} at {event.time}
+      </p>
+      <a href={event.url} className="text-blue-500" target="_blank" rel="noreferrer">
+        Visit Event Website
+      </a>
+      {showSaveButton && !isSaved && (
+        <button className="ml-4 bg-blue-500 text-white px-4 py-2 rounded-md" onClick={handleSave}>
+          Save
+        </button>
+      )}
     </div>
   );
-};
+}
