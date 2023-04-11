@@ -1,8 +1,10 @@
-import React, { useCallback } from "react";
 import { EventCard, GenericEvent } from "../components/EventCard";
+import React, { useCallback, useEffect, useState } from "react";
+
+import { API_URL } from "@/utils/vars";
 
 // Fake search results
-const fakeSearchResults: GenericEvent[] = [
+const fakeSearchResults = [
   {
     id: "1",
     title: "Fake Event 1",
@@ -46,22 +48,42 @@ const fakeSearchResults: GenericEvent[] = [
 ];
 
 export default function Results() {
-  const handleSaveEvent = useCallback((event: GenericEvent) => {
-    console.log("Event saved:", event);
+  const [eventResultsLoading, setEventResultsLoading] = useState(true);
+  const [eventResultsError, setEventResultsError] = useState(false);
+  const [eventResults, setEventResults] = useState<GenericEvent[]>([]);
+
+  console.log(eventResultsLoading);
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      try {
+        const res = await fetch(`${API_URL}/events`);
+        const data: GenericEvent[] = await res.json();
+        setEventResults(() => data);
+        setEventResultsLoading(() => false);
+      } catch (error) {
+        setEventResultsLoading(false);
+        setEventResultsError(true);
+      }
+    };
+
+    fetchResults();
   }, []);
 
   return (
-    <div className="text-center">
-      <h1 className="text-4xl mb-10">Search Results</h1>
-      <ul className="space-y-4">
-        {fakeSearchResults.map((result) => (
-          <li key={result.id} className="text-left">
-            <EventCard event={result} showSaveButton onSave={handleSaveEvent} />
-          </li>
-        ))}
-      </ul>
+    <div className="flex flex-col h-full gap-6 py-12 ">
+      <h1 className="text-3xl font-medium">Search Results</h1>
+      {eventResultsLoading ? (
+        <p>Loading...</p>
+      ) : eventResultsError ? (
+        <p className="font-bold text-rose-600">Error Loading Results!</p>
+      ) : (
+        <ul className="space-y-4">
+          {eventResults.map((result) => (
+            <EventCard key={result.eventId} event={result} eventSaved={false} />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
-
-

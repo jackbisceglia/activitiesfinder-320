@@ -1,46 +1,111 @@
 import React, { useState } from "react";
 
+import { EventActions } from "@/utils/useSavedEvents";
+import Link from "next/link";
+
+export type Tag =
+  | "sports"
+  | "recreational"
+  | "music"
+  | "outdoor"
+  | "indoor"
+  | "educational";
+
 export type GenericEvent = {
-  id: string;
+  eventId: number;
   title: string;
-  location: string;
   date: string;
-  time: string;
-  url: string;
+  time: {
+    start: number;
+    end: number;
+  };
+  // make into types Town and Building
+  location: {
+    Town: string;
+    Building: string;
+  };
+  eventUrl: string;
+  imageUrl?: string;
+  saves: number;
+  tags: Tag[];
   saved?: boolean;
 };
 
 type EventCardProps = {
   event: GenericEvent;
   showSaveButton?: boolean;
+  eventStateDispatch?: React.Dispatch<EventActions>;
+  eventSaved?: boolean;
   onSave?: (event: GenericEvent) => void;
 };
 
-export function EventCard({ event, showSaveButton = false, onSave }: EventCardProps) {
+export function EventCard({
+  event,
+  eventSaved,
+  eventStateDispatch,
+  showSaveButton = false,
+  onSave,
+}: EventCardProps) {
   const [isSaved, setIsSaved] = useState(event.saved || false);
 
   const handleSave = () => {
-    setIsSaved(true);
-    if (onSave) {
-      onSave(event);
+    if (!eventStateDispatch) {
+      console.log("not updating state yet");
+      return;
+    }
+    if (eventSaved) {
+      console.log("adding");
+      eventStateDispatch({
+        type: "REMOVE",
+        payload: {
+          id: event.eventId,
+        },
+      });
+    } else {
+      console.log("removing");
+      eventStateDispatch({
+        type: "ADD",
+        payload: {
+          event,
+        },
+      });
     }
   };
 
   return (
-    <div className={`border border-gray-200 p-4 rounded-md ${isSaved ? "bg-green-100" : ""}`}>
-      <h2 className="text-xl font-bold mb-2">{event.title}</h2>
-      <p className="text-gray-500 mb-1">{event.location}</p>
-      <p className="mb-2">
-        {event.date} at {event.time}
-      </p>
-      <a href={event.url} className="text-blue-500" target="_blank" rel="noreferrer">
-        Visit Event Website
-      </a>
-      {showSaveButton && !isSaved && (
-        <button className="ml-4 bg-blue-500 text-white px-4 py-2 rounded-md" onClick={handleSave}>
-          Save
-        </button>
-      )}
+    <div
+      className="hover:border-gray-400/60 text-left grid grid-cols-[auto_auto] place-items-start place-content-between px-6 py-4 bg-gray-50/90 border border-gray-300 transition-all duration-200 hover:shadow-md shadow-sm rounded-md text-gray-950 "
+      key={event.eventId}
+    >
+      <div className="flex flex-col w-max">
+        <Link
+          target="_blank"
+          href={event.eventUrl}
+          className="pr-4 text-xl font-black w-fit hover:underline underline-offset-2"
+        >
+          {event.title}
+        </Link>
+        <p>
+          {event.location.Building}, {event.location.Town}
+        </p>
+        {/* <p className="mb-2">
+          {event.date} from {event.time.start} to {event.time.end}
+        </p> */}
+        <Link
+          href={event.eventUrl}
+          className="text-blue-500"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Visit Event Website
+        </Link>
+      </div>
+      <button
+        onClick={handleSave}
+        className="px-4 py-[0.375rem] text-xs transition-all duration-100 bg-gray-400 rounded-md hover:bg-gray-500 text-white w-min h-min"
+      >
+        {eventSaved ? "Unsave" : "Save"}
+      </button>
     </div>
   );
 }
