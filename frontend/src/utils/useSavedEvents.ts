@@ -3,7 +3,7 @@ import { useEffect, useReducer, useState } from "react";
 import { GenericEvent } from "@/components/EventCard";
 
 export type EventActions =
-  | { type: "REMOVE"; payload: { id: string } }
+  | { type: "REMOVE"; payload: { id: number } }
   | { type: "ADD"; payload: { event: GenericEvent } }
   | { type: "LOAD_ALL" };
 
@@ -13,7 +13,9 @@ const eventReducer = (
 ): GenericEvent[] => {
   switch (action.type) {
     case "REMOVE":
-      const filteredEvents = events.filter((e) => e.id !== action.payload.id);
+      const filteredEvents = events.filter(
+        (e) => e.eventId !== action.payload.id
+      );
       localStorage.setItem("events", JSON.stringify(filteredEvents));
       return filteredEvents;
     case "ADD":
@@ -34,6 +36,7 @@ export const useEventState = (defaultEvents?: GenericEvent[]) => {
     eventReducer,
     defaultEvents ?? []
   );
+  console.log(events);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 

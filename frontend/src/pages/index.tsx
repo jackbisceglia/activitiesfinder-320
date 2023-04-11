@@ -33,7 +33,7 @@ export default function Home() {
     <div className="flex flex-col flex-1 w-auto gap-4">
       {events.map((e) => (
         <EventCard
-          key={e.id}
+          key={e.eventId}
           event={e}
           eventStateDispatch={eventStateDispatch}
           eventSaved={true}

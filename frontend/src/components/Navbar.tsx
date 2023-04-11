@@ -7,7 +7,6 @@ import { useRouter } from "next/router";
 
 type PagePaths = "/" | "/preferences" | `${"/results"}${string}`;
 
-
 type PageLink = {
   title: string;
   href: PagePaths;
@@ -19,12 +18,20 @@ const clearMockEvents = () => {
 
 const addMockEvent = () => {
   const e: GenericEvent = {
-    id: Math.floor(Math.random() * 1000).toString(),
+    eventId: Math.floor(Math.random() * 1000),
     date: Date().toLocaleUpperCase(),
-    location: "Test Location",
-    time: "Test Time",
+    location: {
+      Town: "Test Town",
+      Building: "Test Building",
+    },
+    time: {
+      start: 0,
+      end: 0,
+    },
     title: `Test Event ${Math.floor(Math.random() * 1000000)}`,
-    url: "https://www.umass.edu/",
+    tags: [],
+    saves: 1,
+    eventUrl: "https://www.umass.edu/",
   };
 
   const eventsFromStorage = localStorage.getItem("events") ?? "";
@@ -44,12 +51,6 @@ const addMockPreferences = () => {
 
 const clearMockPrefs = () => {
   localStorage.removeItem("preferences");
-};
-
-const pages: Record<string, PageLink> = {
-  home: { title: "Home", href: "/" },
-  search: { title: "New Preferences", href: "/preferences" },
-  results: { title: "Default Preferences", href: "/results" },
 };
 
 const NavLink = (props: { href: PagePaths; children: React.ReactNode }) => (
@@ -73,6 +74,10 @@ const Navbar = () => {
   const appendParams = (path: PagePaths): PagePaths => {
     const searchParams = new URLSearchParams();
 
+    if (!defaultPreferences.length) {
+      return path;
+    }
+
     defaultPreferences.forEach((pref) => {
       searchParams.append(pref, "true");
     });
@@ -95,6 +100,8 @@ const Navbar = () => {
     setDefaultPreferences(() => JSON.parse(savedPreferencesOrEmpty));
   }, []);
 
+  console.log(process.env.NODE_ENV);
+
   return (
     <nav className="flex justify-between w-full h-20 text-base font-medium bg-transparent shadow-md shadow-black/5 text-neutral-900 px-28">
       {/* <nav className="flex justify-between w-full h-16 text-base font-medium text-neutral-900 px-28"> */}
@@ -107,27 +114,30 @@ const Navbar = () => {
       </Link>
       {/* LINKS */}
       <ul className="flex gap-8 my-auto">
-        <li className="relative">
-          <button className="flex items-center gap-2 py-2 transition-colors duration-150 text-neutral-900 hover:text-sky-600 peer">
-            DEV TOOLS
-            <ChevronDown />
-          </button>
-          <ul className="hover:flex absolute hidden px-6 pr-12 gap-4 py-5 text-left flex-col rounded-2xl rounded-tr-none shadow-lg w-[16rem] bg-gray-50 top-10 right-3 peer-hover:flex peer-hover:open open:flex">
-            <button onClick={addMockEvent}>
-              <li className="py-2">{"Add Mock Event"}</li>
+        {process.env.NODE_ENV === "development" && (
+          <li className="relative">
+            <button className="flex items-center gap-2 py-2 transition-colors duration-150 text-neutral-900 hover:text-sky-600 peer">
+              DEV TOOLS
+              <ChevronDown />
             </button>
-            <button onClick={clearMockEvents}>
-              <li className="py-2">{"Clear Mock Event"}</li>
-            </button>
-            <hr className="border-gray-500" />
-            <button onClick={addMockPreferences}>
-              <li className="py-2">{"Add Mock Prefs"}</li>
-            </button>
-            <button onClick={clearMockPrefs}>
-              <li className="py-2">{"Clear Mock Prefs"}</li>
-            </button>
-          </ul>
-        </li>
+            <ul className="hover:flex absolute hidden px-6 pr-12 gap-4 py-5 text-left flex-col rounded-2xl rounded-tr-none shadow-lg w-[16rem] bg-gray-50 top-10 right-3 peer-hover:flex peer-hover:open open:flex">
+              <button onClick={addMockEvent}>
+                <li className="py-2">{"Add Mock Event"}</li>
+              </button>
+              <button onClick={clearMockEvents}>
+                <li className="py-2">{"Clear Mock Event"}</li>
+              </button>
+              <hr className="border-gray-500" />
+              <button onClick={addMockPreferences}>
+                <li className="py-2">{"Add Mock Prefs"}</li>
+              </button>
+              <button onClick={clearMockPrefs}>
+                <li className="py-2">{"Clear Mock Prefs"}</li>
+              </button>
+            </ul>
+          </li>
+        )}
+
         <NavLink href={pages.home.href}>
           <li className="py-2">{pages.home.title}</li>
         </NavLink>

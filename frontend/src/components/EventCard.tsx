@@ -3,13 +3,31 @@ import React, { useState } from "react";
 import { EventActions } from "@/utils/useSavedEvents";
 import Link from "next/link";
 
+export type Tag =
+  | "sports"
+  | "recreational"
+  | "music"
+  | "outdoor"
+  | "indoor"
+  | "educational";
+
 export type GenericEvent = {
-  id: string;
+  eventId: number;
   title: string;
-  location: string;
   date: string;
-  time: string;
-  url: string;
+  time: {
+    start: number;
+    end: number;
+  };
+  // make into types Town and Building
+  location: {
+    Town: string;
+    Building: string;
+  };
+  eventUrl: string;
+  imageUrl?: string;
+  saves: number;
+  tags: Tag[];
   saved?: boolean;
 };
 
@@ -40,7 +58,7 @@ export function EventCard({
       eventStateDispatch({
         type: "REMOVE",
         payload: {
-          id: event.id,
+          id: event.eventId,
         },
       });
     } else {
@@ -56,23 +74,25 @@ export function EventCard({
 
   return (
     <div
-      className="hover:border-gray-400/60 grid grid-cols-[auto_auto] place-items-start place-content-between px-6 py-4 bg-gray-50/90 border border-gray-300 transition-all duration-200 hover:shadow-md shadow-sm rounded-md text-gray-950 "
-      key={event.id}
+      className="hover:border-gray-400/60 text-left grid grid-cols-[auto_auto] place-items-start place-content-between px-6 py-4 bg-gray-50/90 border border-gray-300 transition-all duration-200 hover:shadow-md shadow-sm rounded-md text-gray-950 "
+      key={event.eventId}
     >
       <div className="flex flex-col w-max">
         <Link
           target="_blank"
-          href={event.url}
+          href={event.eventUrl}
           className="pr-4 text-xl font-black w-fit hover:underline underline-offset-2"
         >
           {event.title}
         </Link>
-        <p>{event.location}</p>
-        <p className="mb-2">
-          {event.date.slice(0, 4)} at {event.time}
+        <p>
+          {event.location.Building}, {event.location.Town}
         </p>
+        {/* <p className="mb-2">
+          {event.date} from {event.time.start} to {event.time.end}
+        </p> */}
         <Link
-          href={event.url}
+          href={event.eventUrl}
           className="text-blue-500"
           target="_blank"
           rel="noreferrer"
