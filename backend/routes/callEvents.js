@@ -1,34 +1,28 @@
 import express from "express";
 import Filter from "../data/filter.js";
+import Event from "../data/event.js";
 import Driver from "../data/driver.js";
 
-import pkg from 'pg'
-const { Client } = pkg
+// import pkg from 'pg'
+// const { Client } = pkg
 
-const credentials = {
-    user: 'postgres',
-    host: 'activities-finder.cxsdr7lmdwcg.us-east-2.rds.amazonaws.com',
-    database: 'postgres',
-    password: 'activities1',
-    port: 5432,
-}
+// const credentials = {
+//     user: 'postgres',
+//     host: 'activities-finder.cxsdr7lmdwcg.us-east-2.rds.amazonaws.com',
+//     database: 'postgres',
+//     password: 'activities1',
+//     port: 5432,
+// }
 
 const eventRouter = express.Router();
 
 
 eventRouter.get("/", async (req, res) => {
-    //let events = [].push();
-    console.log(new Filter({ startTime: {day:10, hours:11, minutes: 32, am:false}, 
-        endTime: {day:12, hours:11, minutes: 32, am:false}}, 
-        { Town: "Hadley", Building: " " }, ["Educational", "Sports"], "None"));
-    let event = new Event(1234, "Event", {day:11, hours: 10,  minutes:11, am:false},
-    {Town: "Amherst", Building: "Mullins"}, "","",["Sports", "Music"],0, "Indoors");
+    let events = [];
+    //format => eventId, title, time, location, eventUrl, imageUrl, tags, saves,area
+    let event = new Event(12 , "Event1" , {day:10, hours: 12,  minutes:11, am:true}, {Town: "Amherst" , Building: " "} , "github.com" , " " , ["Educational" , "Music"] , 0 , "Indoors");
     events.push(event);
-
-
-    let filter = new Filter({ startTime: {day:10, hours:11, minutes: 32, am:false}, 
-        endTime: {day:12, hours:11, minutes: 32, am:false}}, 
-        { Town: "Amherst", Building: " " }, ["Educational", "Sports"], "None");
+    let filter = new Filter( {startTime: {day:10, hours:11, minutes: 32, am:true} , endTime: {day: 12 , hours: 11, minutes: 32, am: false} }, {Town: "Amherst" , Building: " "} , ["Educational", "Sports"] , "None");
     let driver = new Driver(filter, events);
     let comp_events = driver.getCompatibleEvents();
     let returnArr = driver.getSortedEvents(comp_events, filter);

@@ -1,12 +1,9 @@
 export default class Filter {
-    //time {Hours: Minutes: AM: Date:}
     constructor(dateTime, location, tags, area) {
-        //04 Dec 1995 00:12:00 GMT
-        
-        this.dateTime = dateTime; //{startTime: endTime:}
-        this.location = location; //Location object (JSON)
-        this.tags = tags;
-        this.area = area;
+        this.dateTime = dateTime; // {startTime: {day: ,hours: ,minutes: ,am: } , endTime: {...} } //04 Dec 1995 00:12:00 GMT
+        this.location = location; // {Town: " " , Building: " "}
+        this.tags = tags; // Array<String>
+        this.area = area; //String
     }
 
     getTags = () => this.tags;
@@ -19,15 +16,15 @@ export default class Filter {
     setTime = (newTime) => {this.dateTime = newTime};
 
     getStartSeconds = () => {
-        Date.parse(timeRange.startTime.day + " Apr 2023 " + ( timeRange.startTime.am? timeRange.startTime.hours:
-            (this.timeRange.startTime.hours+12) % 24) + 
-        ":" + timeRange.startTime.minutes + ":00 EST");
+        return Date.parse(this.dateTime.startTime.day + " Apr 2023 " + (this.dateTime.startTime.am? this.dateTime.startTime.hours:
+            (this.dateTime.startTime.hours+12) % 24) + 
+        ":" + this.dateTime.startTime.minutes + ":00 EST");
     }
 
     getEndSeconds = () => {
-        Date.parse(timeRange.EndTime.day + " Apr 2023 " + ( timeRange.EndTime.am? timeRange.EndTime.hours:
-            (this.timeRange.EndTime.hours+12) % 24) + 
-        ":" + timeRange.EndTime.minutes + ":00 EST");
+        return Date.parse(this.dateTime.endTime.day + " Apr 2023 " + (this.dateTime.endTime.am? this.dateTime.endTime.hours:
+            (this.dateTime.endTime.hours+12) % 24) + 
+        ":" + this.dateTime.endTime.minutes + ":00 EST");
     }
 
     
@@ -41,4 +38,3 @@ export default class Filter {
     setArea = (newArea) => {this.area = newArea};
 
 }
-

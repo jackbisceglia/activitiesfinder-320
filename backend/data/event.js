@@ -1,35 +1,37 @@
 export default class Event {
 
     constructor(eventId, title, dateTime, location, eventUrl, imageUrl, tags, saves, area) {
+
         if (eventId === undefined || title === undefined || dateTime === undefined || location === undefined || eventUrl === undefined) {
             throw new Error("A Mandatory Parameter is Undefined");
         }
+
         //mandatory
         this.eventId = eventId; //number
         this.title = title; //String
-        this.dateTime = dateTime; // {Month: day: , hour: minute:}
-        this.location = location; //Location object (JSON)
+        this.dateTime = dateTime; // {day: ,hours: ,minutes: ,am: }
+        this.location = location; //{Town: " " , Building: " "}
         this.eventUrl = eventUrl; //String
         this.saves = saves; //number
-        this.area = area;
+        this.area = area; //String
+
         //Optional
-        this.tags = (tags === undefined) ? [] : tags;
-        this.imageUrl = imageUrl;
-        // this.eventUrl = (eventUrl === undefined)? "" : eventUrl;
+        this.tags = (tags === undefined) ? [] : tags; //Array<String>
+        this.imageUrl = imageUrl; //String
     }
 
-    getEventId = () => this.eventId;
-    setEventId = (newId) => { this.eventId = newId };
+    getEventId = () => this.eventId; 
+    setEventId = (newId) => { this.eventId = newId }; 
 
-    getTitle = () => this.title;
+    getTitle = () => this.title; 
     setTitle = (newTitle) => { this.title = newTitle };
 
     getTime = () => this.dateTime;
     setTime = (newTime) => { this.dateTime = newTime };
 
     getSeconds = () => {
-        Date.parse(timeRange.day + " Apr 2023 " + ( dateTime.am? dateTime.hours:(this.dateTime.hours+12) % 24) + 
-        ":" + dateTime.minutes + ":00 EST");
+        return Date.parse(this.dateTime.day + " Apr 2023 " + ( this.dateTime.am? this.dateTime.hours:(this.dateTime.hours+12) % 24) + 
+        ":" + this.dateTime.minutes + ":00 EST");
     }
 
     getLocation = () => this.location;
@@ -56,10 +58,11 @@ export default class Event {
 
     isCompatible = (filter) => {
 
-        if (this.getTime() < filter.getStartSeconds() || this.getTime() > filter.getEndSeconds()) {
+        if (this.getSeconds() < filter.getStartSeconds() || this.getSeconds() > filter.getEndSeconds()) {
             console.log("Time out of range");
             return false;
         }
+
         if (filter.getLocation().Town !== this.getLocation().Town) {
             console.log("Filter town: " + filter.getLocation().Town + " Event town: " + this.getLocation().Town);
             return false;
@@ -93,20 +96,10 @@ export default class Event {
     }
 
     print = () => {
-        let returnString = "";
-
-        // console.log("Event ID: " + this.eventId);
-        // console.log("Title: " + this.title);
-        // console.log("Time: " + this.time);
-        // console.log("Location: " + this.location.Building + ", " + this.location.Town);
-        // console.log("Tags: " + this.tags);
-
-        returnString += "Event ID: " + this.eventId;
-        returnString += "\nTitle: " + this.title;
-        returnString += "\nTime: " + this.time;
-        returnString += "\nLocation: " + this.location.Building + ", " + this.location.Town;
-        returnString += "\nTags: " + this.tags
-        return returnString;
-
+        console.log("Event ID: " + this.eventId);
+        console.log("Title: " + this.title);
+        console.log("Time: " + this.time);
+        console.log("Location: " + this.location.Building + ", " + this.location.Town);
+        console.log("Tags: " + this.tags);
     }
 }
