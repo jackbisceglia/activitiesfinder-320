@@ -46,7 +46,7 @@ export default class Driver {
         let compatibleEvents = [];
         for (let i = 0; i < this.eventData.length; ++i) {
             //Time is just some random arbitrary number right now
-            let event = new Event(this.eventData[i].event_id, this.eventData[i].event_name, { startTime: 0, endTime: 20 }, { Town: this.eventData[i].event_town, Building: this.eventData[i].event_location }, this.eventData[i].event_link, "", Object.values(this.eventData[i].event_tags), 0, this.eventData[i].event_area);
+            let event = eventData[i];
             let score = event.getScore(this.filter);
             console.log("Score: ", score);
             if (score != -1) {

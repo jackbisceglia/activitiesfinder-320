@@ -1,13 +1,13 @@
 export default class Event {
 
-    constructor(eventId, title, time, location, eventUrl, imageUrl, tags, saves, area) {
-        if (eventId === undefined || title === undefined || time === undefined || location === undefined || eventUrl === undefined) {
+    constructor(eventId, title, dateTime, location, eventUrl, imageUrl, tags, saves, area) {
+        if (eventId === undefined || title === undefined || dateTime === undefined || location === undefined || eventUrl === undefined) {
             throw new Error("A Mandatory Parameter is Undefined");
         }
         //mandatory
         this.eventId = eventId; //number
         this.title = title; //String
-        this.time = time; // {Month: day: , hour: minute:}
+        this.dateTime = dateTime; // {Month: day: , hour: minute:}
         this.location = location; //Location object (JSON)
         this.eventUrl = eventUrl; //String
         this.saves = saves; //number
@@ -24,8 +24,13 @@ export default class Event {
     getTitle = () => this.title;
     setTitle = (newTitle) => { this.title = newTitle };
 
-    getTime = () => this.time;
-    setTime = (newTime) => { this.time = newTime };
+    getTime = () => this.dateTime;
+    setTime = (newTime) => { this.dateTime = newTime };
+
+    getSeconds = () => {
+        Date.parse(timeRange.day + " Apr 2023 " + ( dateTime.am? dateTime.hours:(this.dateTime.hours+12) % 24) + 
+        ":" + dateTime.minutes + ":00 EST");
+    }
 
     getLocation = () => this.location;
     setLocation = (newLocation) => { this.location = newLocation };
@@ -50,7 +55,8 @@ export default class Event {
     removeTag = (TagToRemove) => { this.tags = this.tags.filter(x => x !== TagToRemove); };
 
     isCompatible = (filter) => {
-        if (this.getTime() < filter.getTime().startTime || this.getTime() > filter.getTime().endTime) {
+
+        if (this.getTime() < filter.getStartSeconds() || this.getTime() > filter.getEndSeconds()) {
             console.log("Time out of range");
             return false;
         }
