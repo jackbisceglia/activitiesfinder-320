@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 
 import { GenericEvent } from "./EventCard";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { preferenceObjectToString } from "@/utils/helpers";
 
 type PagePaths = "/" | "/preferences" | `${"/results"}${string}`;
 
@@ -44,7 +44,12 @@ const addMockEvent = () => {
 };
 
 const addMockPreferences = () => {
-  const preferences = ["indoor", "amherst", "sports", "music"];
+  console.log("ADDING MOCK PREFERENCES");
+  const preferences = {
+    area: "outdoors",
+    type: "sports",
+    location: "amherst",
+  };
 
   localStorage.setItem("preferences", JSON.stringify(preferences));
 };
@@ -63,39 +68,22 @@ const NavLink = (props: { href: PagePaths; children: React.ReactNode }) => (
 );
 
 const Navbar = () => {
-  const router = useRouter();
-  const [defaultPreferences, setDefaultPreferences] = useState<string[]>([
-    "outdoors",
-    "sports",
-    "music",
-    "amherst",
-  ]);
-
-  const appendParams = (path: PagePaths): PagePaths => {
-    const searchParams = new URLSearchParams();
-
-    if (!defaultPreferences.length) {
-      return path;
-    }
-
-    defaultPreferences.forEach((pref) => {
-      searchParams.append(pref, "true");
-    });
-
-    return `${path}?${searchParams.toString()}` as PagePaths;
-  };
+  const [defaultPreferences, setDefaultPreferences] = useState<
+    Record<string, string>
+  >({});
+  const searchParamString = preferenceObjectToString(defaultPreferences);
 
   const pages: Record<string, PageLink> = {
     home: { title: "Home", href: "/" },
     search: { title: "New Preferences", href: "/preferences" },
     results: {
       title: "Default Preferences",
-      href: appendParams("/results"),
+      href: `/results${searchParamString && `?${searchParamString}`}`,
     },
   };
 
   useEffect(() => {
-    const savedPreferencesOrEmpty = localStorage.getItem("preferences") ?? "[]";
+    const savedPreferencesOrEmpty = localStorage.getItem("preferences") ?? "{}";
 
     setDefaultPreferences(() => JSON.parse(savedPreferencesOrEmpty));
   }, []);
@@ -104,7 +92,6 @@ const Navbar = () => {
 
   return (
     <nav className="flex justify-between w-full h-20 text-base font-medium bg-transparent shadow-md shadow-black/5 text-neutral-900 px-28">
-      {/* <nav className="flex justify-between w-full h-16 text-base font-medium text-neutral-900 px-28"> */}
       {/* TITLE */}
       <Link
         href="/"
@@ -114,30 +101,27 @@ const Navbar = () => {
       </Link>
       {/* LINKS */}
       <ul className="flex gap-8 my-auto">
-        {process.env.NODE_ENV === "development" && (
-          <li className="relative">
-            <button className="flex items-center gap-2 py-2 transition-colors duration-150 text-neutral-900 hover:text-sky-600 peer">
-              DEV TOOLS
-              <ChevronDown />
+        <li className="relative">
+          <button className="flex items-center gap-2 py-2 transition-colors duration-150 text-neutral-900 hover:text-sky-600 peer">
+            DEV TOOLS
+            <ChevronDown />
+          </button>
+          <ul className="hover:flex absolute hidden px-6 pr-12 gap-4 py-5 text-left flex-col rounded-2xl rounded-tr-none shadow-lg w-[16rem] bg-gray-50 top-10 right-3 peer-hover:flex peer-hover:open open:flex">
+            <button onClick={addMockEvent}>
+              <li className="py-2">{"Add Mock Event"}</li>
             </button>
-            <ul className="hover:flex absolute hidden px-6 pr-12 gap-4 py-5 text-left flex-col rounded-2xl rounded-tr-none shadow-lg w-[16rem] bg-gray-50 top-10 right-3 peer-hover:flex peer-hover:open open:flex">
-              <button onClick={addMockEvent}>
-                <li className="py-2">{"Add Mock Event"}</li>
-              </button>
-              <button onClick={clearMockEvents}>
-                <li className="py-2">{"Clear Mock Event"}</li>
-              </button>
-              <hr className="border-gray-500" />
-              <button onClick={addMockPreferences}>
-                <li className="py-2">{"Add Mock Prefs"}</li>
-              </button>
-              <button onClick={clearMockPrefs}>
-                <li className="py-2">{"Clear Mock Prefs"}</li>
-              </button>
-            </ul>
-          </li>
-        )}
-
+            <button onClick={clearMockEvents}>
+              <li className="py-2">{"Clear Mock Event"}</li>
+            </button>
+            <hr className="border-gray-500" />
+            <button onClick={addMockPreferences}>
+              <li className="py-2">{"Add Mock Prefs"}</li>
+            </button>
+            <button onClick={clearMockPrefs}>
+              <li className="py-2">{"Clear Mock Prefs"}</li>
+            </button>
+          </ul>
+        </li>
         <NavLink href={pages.home.href}>
           <li className="py-2">{pages.home.title}</li>
         </NavLink>

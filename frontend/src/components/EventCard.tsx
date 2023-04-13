@@ -93,7 +93,7 @@ export function EventCard({
         </p> */}
         <Link
           href={event.eventUrl}
-          className="text-blue-500"
+          className="text-sky-500"
           target="_blank"
           rel="noreferrer"
         >

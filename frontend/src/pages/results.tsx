@@ -2,6 +2,8 @@ import { EventCard, GenericEvent } from "../components/EventCard";
 import React, { useCallback, useEffect, useState } from "react";
 
 import { API_URL } from "@/utils/vars";
+import { preferenceObjectToString } from "@/utils/helpers";
+import { useRouter } from "next/router";
 
 // Fake search results
 const fakeSearchResults = [
@@ -48,16 +50,18 @@ const fakeSearchResults = [
 ];
 
 export default function Results() {
+  const router = useRouter();
   const [eventResultsLoading, setEventResultsLoading] = useState(true);
   const [eventResultsError, setEventResultsError] = useState(false);
   const [eventResults, setEventResults] = useState<GenericEvent[]>([]);
 
-  console.log(eventResultsLoading);
-
   useEffect(() => {
+    if (router.query === undefined) return;
+
     const fetchResults = async () => {
       try {
-        const res = await fetch(`${API_URL}/events`);
+        const searchParamString = preferenceObjectToString(router.query);
+        const res = await fetch(`${API_URL}/events?${searchParamString}`);
         const data: GenericEvent[] = await res.json();
         setEventResults(() => data);
         setEventResultsLoading(() => false);
@@ -68,7 +72,7 @@ export default function Results() {
     };
 
     fetchResults();
-  }, []);
+  }, [router.query]);
 
   return (
     <div className="flex flex-col h-full gap-6 py-12 ">
