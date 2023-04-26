@@ -21,7 +21,7 @@ const eventRouter = express.Router();
 
 
 eventRouter.get("/", ClerkExpressWithAuth({
-    console.log()
+    //console.log()
 }),
   async (req, res) => {
     let events = [];
