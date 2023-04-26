@@ -3,6 +3,9 @@ import Filter from "../data/filter.js";
 import Event from "../data/event.js";
 import Driver from "../data/driver.js";
 
+import "dotenv/config"; // To read CLERK_API_KEY
+import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
+
 // import pkg from 'pg'
 // const { Client } = pkg
 
@@ -17,7 +20,10 @@ import Driver from "../data/driver.js";
 const eventRouter = express.Router();
 
 
-eventRouter.get("/", async (req, res) => {
+eventRouter.get("/", ClerkExpressWithAuth({
+    console.log()
+}),
+  async (req, res) => {
     let events = [];
     //format => eventId, title, time, location, eventUrl, imageUrl, tags, saves,area
     let event = new Event(12 , "Event1" , {day:10, hours: 12,  minutes:11, am:true}, {Town: "Amherst" , Building: " "} , "github.com" , " " , ["Educational" , "Music"] , 0 , "Indoors");
@@ -28,6 +34,8 @@ eventRouter.get("/", async (req, res) => {
     let returnArr = driver.getSortedEvents(comp_events, filter);
     res.json(returnArr);
 });
+
+
 
 // eventRouter.get("/", async (req, res) => {
 //     // Need to set filter from req params
