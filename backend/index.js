@@ -4,10 +4,13 @@ import eventRouter from "./routes/callEvents.js";
 import express from "express";
 
 //From Clerk Example
+
 import "dotenv/config"; // To read CLERK_API_KEY
 import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
 //import express from "express";
 
+
+export default function middleWare() {return ClerkExpressWithAuth}
 // init app
 const app = express();
 const port = 8080;

@@ -3,8 +3,13 @@ import Filter from "../data/filter.js";
 import Event from "../data/event.js";
 import Driver from "../data/driver.js";
 
-import "dotenv/config"; // To read CLERK_API_KEY
-import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
+import "../dotenv/config"; // To read CLERK_API_KEY
+
+import middleWare from "../index.js";
+import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
+
+
+// { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
 
 // import pkg from 'pg'
 // const { Client } = pkg
@@ -18,10 +23,17 @@ import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
 // }
 
 const eventRouter = express.Router();
+eventRouter.use((req,res,next) => {
+    auth({})
+    next()}
+    )
 
+console.log(middleWare)
 
-eventRouter.get("/", ClerkExpressWithAuth({
-    //console.log()
+const auth = middleWare()
+console.log(auth);
+eventRouter.get("/", auth({
+    
 }),
   async (req, res) => {
     let events = [];
