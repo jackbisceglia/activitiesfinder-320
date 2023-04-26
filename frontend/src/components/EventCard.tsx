@@ -102,7 +102,11 @@ export function EventCard({
       </div>
       <button
         onClick={handleSave}
-        className="px-4 py-[0.375rem] text-xs transition-all duration-100 bg-gray-400 rounded-md hover:bg-gray-500 text-white w-min h-min"
+        className={`${
+          eventSaved
+            ? "bg-gray-400 hover:bg-gray-500"
+            : "bg-sky-600 hover:bg-sky-700"
+        } px-4 py-[0.375rem] text-xs transition-all duration-100 bg-gray-400 rounded-md  text-white w-min h-min`}
       >
         {eventSaved ? "Unsave" : "Save"}
       </button>

@@ -1,8 +1,10 @@
-import { CarIcon, ChevronDown } from "lucide-react";
+import { CarIcon, ChevronDown, User } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { UserButton, useUser } from "@clerk/nextjs";
 
 import { GenericEvent } from "./EventCard";
 import Link from "next/link";
+import { env } from "process";
 import { preferenceObjectToString } from "@/utils/helpers";
 
 type PagePaths = "/" | "/preferences" | `${"/results"}${string}`;
@@ -67,7 +69,34 @@ const NavLink = (props: { href: PagePaths; children: React.ReactNode }) => (
   </Link>
 );
 
+const DevTools = () => {
+  return (
+    <li className="relative">
+      <button className="flex items-center gap-2 py-2 transition-colors duration-150 text-neutral-900 hover:text-sky-600 peer">
+        DEV TOOLS
+        <ChevronDown />
+      </button>
+      <ul className="hover:flex absolute hidden px-6 pr-12 gap-4 py-5 text-left flex-col rounded-2xl rounded-tr-none shadow-lg w-[16rem] bg-gray-50 top-10 right-3 peer-hover:flex peer-hover:open open:flex">
+        <button onClick={addMockEvent}>
+          <li className="py-2">{"Add Mock Event"}</li>
+        </button>
+        <button onClick={clearMockEvents}>
+          <li className="py-2">{"Clear Mock Event"}</li>
+        </button>
+        <hr className="border-gray-500" />
+        <button onClick={addMockPreferences}>
+          <li className="py-2">{"Add Mock Prefs"}</li>
+        </button>
+        <button onClick={clearMockPrefs}>
+          <li className="py-2">{"Clear Mock Prefs"}</li>
+        </button>
+      </ul>
+    </li>
+  );
+};
+
 const Navbar = () => {
+  const user = useUser();
   const [defaultPreferences, setDefaultPreferences] = useState<
     Record<string, string>
   >({});
@@ -88,8 +117,6 @@ const Navbar = () => {
     setDefaultPreferences(() => JSON.parse(savedPreferencesOrEmpty));
   }, []);
 
-  console.log(process.env.NODE_ENV);
-
   return (
     <nav className="flex justify-between w-full h-20 text-base font-medium bg-transparent shadow-md shadow-black/5 text-neutral-900 px-28">
       {/* TITLE */}
@@ -100,51 +127,34 @@ const Navbar = () => {
         Activities<span className="font-extrabold text-sky-500">Finder</span>
       </Link>
       {/* LINKS */}
-      <ul className="flex gap-8 my-auto">
-        <li className="relative">
-          <button className="flex items-center gap-2 py-2 transition-colors duration-150 text-neutral-900 hover:text-sky-600 peer">
-            DEV TOOLS
-            <ChevronDown />
-          </button>
-          <ul className="hover:flex absolute hidden px-6 pr-12 gap-4 py-5 text-left flex-col rounded-2xl rounded-tr-none shadow-lg w-[16rem] bg-gray-50 top-10 right-3 peer-hover:flex peer-hover:open open:flex">
-            <button onClick={addMockEvent}>
-              <li className="py-2">{"Add Mock Event"}</li>
+      {user.isLoaded && user.isSignedIn && (
+        <ul className="flex gap-8 my-auto">
+          {process.env.NEXT_PUBLIC_ISDEVMODE && <DevTools />}
+          <NavLink href={pages.home.href}>
+            <li className="py-2">{pages.home.title}</li>
+          </NavLink>
+          {/* Dropdown */}
+          <li className="relative">
+            <button className="flex items-center gap-2 py-2 transition-colors duration-150 text-neutral-900 hover:text-sky-600 peer">
+              Find Events
+              <ChevronDown />
             </button>
-            <button onClick={clearMockEvents}>
-              <li className="py-2">{"Clear Mock Event"}</li>
-            </button>
-            <hr className="border-gray-500" />
-            <button onClick={addMockPreferences}>
-              <li className="py-2">{"Add Mock Prefs"}</li>
-            </button>
-            <button onClick={clearMockPrefs}>
-              <li className="py-2">{"Clear Mock Prefs"}</li>
-            </button>
-          </ul>
-        </li>
-        <NavLink href={pages.home.href}>
-          <li className="py-2">{pages.home.title}</li>
-        </NavLink>
-        {/* Dropdown */}
-        <li className="relative">
-          <button className="flex items-center gap-2 py-2 transition-colors duration-150 text-neutral-900 hover:text-sky-600 peer">
-            Find Events
-            <ChevronDown />
-          </button>
-          <ul className="hover:flex absolute hidden px-6 pr-12 gap-4 py-5 text-left flex-col rounded-2xl rounded-tr-none shadow-lg w-[16rem] bg-gray-50 top-10 right-3 peer-hover:flex peer-hover:open open:flex">
-            <NavLink href={pages.search.href}>
-              <li className="transition-all duration-150 hover:pl-2">
-                {pages.search.title}
-              </li>
-            </NavLink>
-            <NavLink href={pages.results.href}>
-              <li className="transition-all duration-150 hover:pl-2">
-                {pages.results.title}
-              </li>
-            </NavLink>
-          </ul>
-        </li>
-      </ul>
+            <ul className="hover:flex absolute hidden px-6 pr-12 gap-4 py-5 text-left flex-col rounded-2xl rounded-tr-none shadow-lg w-[16rem] bg-gray-50 top-10 right-3 peer-hover:flex peer-hover:open open:flex">
+              <NavLink href={pages.search.href}>
+                <li className="transition-all duration-150 hover:pl-2">
+                  {pages.search.title}
+                </li>
+              </NavLink>
+              <NavLink href={pages.results.href}>
+                <li className="transition-all duration-150 hover:pl-2">
+                  {pages.results.title}
+                </li>
+              </NavLink>
+            </ul>
+          </li>
+          <UserButton />
+        </ul>
+      )}
     </nav>
   );
 };
