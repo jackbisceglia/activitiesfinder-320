@@ -1,23 +1,19 @@
 import cors from "cors";
-// import userRouter from "./routes/users.js";
 import eventRouter from "./routes/callEvents.js";
-
-// import "./config.env"; // To read CLERK_API_KEY
-// require('dotenv').config({ path: './config.env' });
-
 import { config } from 'dotenv';
-config({ path: './config.env' });
-import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
-
+config({ path: './.env.local' });
+// import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
+import Clerk from '@clerk/clerk-sdk-node/esm/instance';
 import express from "express";
 
 // init app
 const port = process.env.PORT || 8080;
 const app = express();
 
+const secretKey = process.env.CLERK_SECRET_KEY;
+console.log("Key: " , secretKey);
 
-const apiKey = process.env.CLERK_SECRET_KEY;
-console.log("Key: " , apiKey);
+const clerk = new Clerk({ secretKey: secretKey});
 
 // middleware
 app.use(cors());
@@ -32,10 +28,9 @@ app.get("/", async (req, res) => {
   res.send("Hello World!");
 });
 
-// Use the lax middleware that returns an empty auth object when unauthenticated
 app.get(
   "/protected-endpoint",
-  ClerkExpressWithAuth({
+  clerk.expressWithAuth({
     // ...options
   }),
   (req, res) => {
