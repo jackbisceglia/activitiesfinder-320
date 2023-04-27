@@ -118,16 +118,19 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className="flex justify-between w-full h-20 text-base font-medium bg-transparent shadow-md shadow-black/5 text-neutral-900 px-28">
+    <nav className="flex items-center justify-between w-full h-20 text-base font-medium bg-transparent shadow-md shadow-black/5 text-neutral-900 px-28">
       {/* TITLE */}
       <Link
         href="/"
-        className="my-auto text-xl font-extrabold transition-opacity duration-150 hover:opacity-80"
+        className="my-auto text-xl font-black text-transparent transition-opacity duration-150 hover:opacity-80 bg-gradient-to-tr from-violet-500 to-sky-500 bg-clip-text"
       >
-        Activities<span className="font-extrabold text-sky-500">Finder</span>
+        <span className="font-extrabold bg-gradient-to-tr from-neutral-900 to-neutral-600 bg-clip-text">
+          Activities
+        </span>
+        Finder
       </Link>
       {/* LINKS */}
-      {user.isLoaded && user.isSignedIn && (
+      {user.isLoaded && user.isSignedIn ? (
         <ul className="flex gap-8 my-auto">
           {process.env.NEXT_PUBLIC_ISDEVMODE && <DevTools />}
           <NavLink href={pages.home.href}>
@@ -152,8 +155,22 @@ const Navbar = () => {
               </NavLink>
             </ul>
           </li>
-          <UserButton />
+          <UserButton
+            appearance={{
+              elements: {
+                userButtonAvatarBox: "border-2  border-sky-700/25",
+                userButtonAvatarImage: "bg-sky-600",
+              },
+            }}
+          />
         </ul>
+      ) : (
+        <Link
+          href="/signin"
+          className="px-6 py-2 text-sm transition-all duration-200 border rounded-md h-min border-neutral-900/75 hover:bg-gray-400/30 text-neutral-900"
+        >
+          Sign In
+        </Link>
       )}
     </nav>
   );

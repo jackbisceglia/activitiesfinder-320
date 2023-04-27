@@ -29,8 +29,9 @@ export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
   const publicPages = ["landing", "signin", "signup"];
-
   const publicPagePaths = publicPages.map((p) => `/${p}`);
+
+  console.log(router);
 
   const Page = () => (
     <div className={`${font.className} min-h-screen flex flex-col`}>
@@ -43,7 +44,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <ClerkProvider {...pageProps}>
-      {publicPagePaths.includes(router.pathname) ? (
+      {publicPagePaths.some((p) => router.asPath.startsWith(p)) ? (
         <Page />
       ) : (
         <>
@@ -55,6 +56,7 @@ export default function App({ Component, pageProps }: AppProps) {
           </SignedOut>
         </>
       )}
+      {/* <Page /> */}
     </ClerkProvider>
   );
 }

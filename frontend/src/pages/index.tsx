@@ -6,9 +6,9 @@ import { useEventState } from "@/utils/useSavedEvents";
 
 const FindEventsPanel = ({ hasEvents }: { hasEvents: boolean }) => {
   const fullScreenStyle =
-    " justify-center flex-grow items-center my-auto rounded-md bg-[radial-gradient(ellipse_at_left,_var(--tw-gradient-stops))] from-sky-400 to-indigo-900 flex min-h-[30rem]";
+    " justify-center flex-grow items-center my-auto rounded-md bg-gradient-to-tr from-violet-500 to-sky-500 flex min-h-[30rem]";
   const singleColumnStyle =
-    "flex items-center justify-center rounded-md bg-[radial-gradient(ellipse_at_left,_var(--tw-gradient-stops))] from-sky-400 to-indigo-900 w-72";
+    "flex items-center justify-center rounded-md bg-gradient-to-tr from-violet-500 to-sky-500 w-72";
 
   return (
     <div className={hasEvents ? singleColumnStyle : fullScreenStyle}>
@@ -30,7 +30,7 @@ export default function Home() {
   if (error) return <p>Error</p>;
 
   const EventList = () => (
-    <div className="flex flex-col flex-1 w-auto gap-4">
+    <div className="flex flex-col self-stretch flex-1 gap-4">
       {events.map((e) => (
         <EventCard
           key={e.eventId}
@@ -43,7 +43,7 @@ export default function Home() {
   );
 
   return (
-    <div className="flex flex-col h-full gap-6 py-12 sm:flex-row ">
+    <div className="flex flex-col flex-1 h-full gap-6 py-12 sm:flex-row ">
       {events.length ? (
         <>
           <EventList />
