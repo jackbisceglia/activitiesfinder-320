@@ -40,21 +40,21 @@ app.get("/", async (req, res) => {
 // );
 
 // Use the strict middleware that raises an error when unauthenticated
-// app.get(
-//   '/protected-endpoint',
-//   clerk.expressRequireAuth({
-//     // ...options
-//   }),
-//   (req, res) => {
-//     // res.json(req.auth);
-//     res.redirect('/events' , eventRouter);
-//   }
-// );
+app.get(
+  '/protected-endpoint',
+  clerk.expressRequireAuth({
+    // ...options
+  }),
+  (req, res) => {
+    // res.json(req.auth);
+    res.redirect('/events' , eventRouter);
+  }
+);
 
-app.use((req, res, next) => {
-  clerk.expressRequireAuth();
-  next();
-});
+// app.use((req, res, next) => {
+//   clerk.expressRequireAuth();
+//   next();
+// });
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
