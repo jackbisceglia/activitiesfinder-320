@@ -14,6 +14,7 @@ const secretKey = process.env.CLERK_SECRET_KEY;
 console.log("Key: " , secretKey);
 
 const clerk = new Clerk({ secretKey: secretKey});
+console.log(clerk);
 
 // middleware
 app.use(cors());
@@ -28,15 +29,37 @@ app.get("/", async (req, res) => {
   res.send("Hello World!");
 });
 
-app.get(
-  "/protected-endpoint",
-  clerk.expressWithAuth({
-    // ...options
-  }),
-  (req, res) => {
-    res.json(req.auth);
-  }
-);
+// app.get(
+//   "/protected-endpoint",
+//   clerk.expressWithAuth({
+//     // ...options
+//   }),
+//   (req, res) => {
+//     res.json(req.auth);
+//   }
+// );
+
+// Use the strict middleware that raises an error when unauthenticated
+// app.get(
+//   '/protected-endpoint',
+//   clerk.expressRequireAuth({
+//     // ...options
+//   }),
+//   (req, res) => {
+//     // res.json(req.auth);
+//     res.redirect('/events' , eventRouter);
+//   }
+// );
+
+app.use((req, res, next) => {
+  clerk.expressRequireAuth();
+  next();
+});
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(401).send('Unauthenticated!');
+});
 
 app.use("/events", eventRouter);
 
