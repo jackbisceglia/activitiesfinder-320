@@ -62,7 +62,9 @@ export default function Results() {
       try {
         const searchParamString = preferenceObjectToString(router.query);
         const res = await fetch(`${API_URL}/events?${searchParamString}`);
+        console.log(res);
         const data: GenericEvent[] = await res.json();
+        console.log(data);
         setEventResults(() => data);
         setEventResultsLoading(() => false);
       } catch (error) {
@@ -75,7 +77,7 @@ export default function Results() {
   }, [router.query]);
 
   return (
-    <div className="flex flex-col h-full gap-6 py-12 ">
+    <div className="flex flex-col flex-1 h-full gap-6 py-12">
       <h1 className="text-3xl font-medium">Search Results</h1>
       {eventResultsLoading ? (
         <p>Loading...</p>

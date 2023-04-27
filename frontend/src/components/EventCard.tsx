@@ -74,7 +74,7 @@ export function EventCard({
 
   return (
     <div
-      className="hover:border-gray-400/60 text-left grid grid-cols-[auto_auto] place-items-start place-content-between px-6 py-4 bg-gray-50/90 border border-gray-300 transition-all duration-200 hover:shadow-md shadow-sm rounded-md text-gray-950 "
+      className="hover:border-gray-400/60 hover:pl-8 text-left grid grid-cols-[auto_auto] place-items-start place-content-between px-6 py-4 bg-gray-50/90 border border-gray-300 transition-all duration-300 hover:shadow-md shadow-sm rounded-md text-gray-950 "
       key={event.eventId}
     >
       <div className="flex flex-col w-max">
