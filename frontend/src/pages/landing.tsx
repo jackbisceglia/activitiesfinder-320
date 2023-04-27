@@ -14,7 +14,7 @@ export default function LandingPage() {
         <meta name="description" content={metadata.description} />
       </Head>
       <div className="flex flex-col items-center justify-center flex-1 w-full gap-4 pb-20 mx-auto text-center">
-        <h1 className="py-2 text-6xl font-extrabold text-transparent transition-all duration-700 hover:scale-[101%] hover:tracking-wide bg-gradient-to-tr from-violet-500 to-sky-500 bg-clip-text">
+        <h1 className="py-2 text-6xl font-extrabold text-transparent transition-all duration-700 hover:scale-[101%] hover:tracking-wide bg-gradient-to-tr from-violet-500 to-sky-600 bg-clip-text">
           <span className="bg-gradient-to-tr from-neutral-900 to-neutral-600 bg-clip-text">
             Activities
           </span>

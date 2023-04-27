@@ -159,7 +159,7 @@ const Navbar = () => {
             appearance={{
               elements: {
                 userButtonAvatarBox: "border-2  border-sky-700/25",
-                userButtonAvatarImage: "bg-sky-600",
+                userButtonAvatarImage: "translate-s",
               },
             }}
           />
