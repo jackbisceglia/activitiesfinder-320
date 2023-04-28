@@ -62,7 +62,6 @@ export default function Results() {
       try {
         const searchParamString = preferenceObjectToString(router.query);
         const res = await fetch(`${API_URL}/events?${searchParamString}`);
-        // const res = await fetch(`${API_URL}/protected-endpoint`);
         console.log(res);
         const data: GenericEvent[] = await res.json();
         console.log(data);

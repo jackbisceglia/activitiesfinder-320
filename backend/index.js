@@ -2,9 +2,6 @@ import cors from "cors";
 import eventRouter from "./routes/callEvents.js";
 import { config } from 'dotenv';
 config({ path: './.env.local' });
-// import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
-// import Cookies from 'cookies';
-// import cookieParser from 'cookie-parser';
 import Clerk from '@clerk/clerk-sdk-node/esm/instance';
 import express from "express";
 
@@ -21,7 +18,6 @@ console.log(clerk);
 
 // middleware
 app.use(cors());
-// app.use(cookieParser());
 
 // subrouters
 // routers exported from files in /routes will be defined here
@@ -33,7 +29,7 @@ app.get("/", async (req, res) => {
 });
 
 
-//clerk middleware
+//clerk middleware to protect /events
 app.use("/events" , (req, res, next) => {
   clerk.expressRequireAuth({
     //options
@@ -46,13 +42,13 @@ app.use((err, req, res, next) => {
   res.status(401).send('Unauthenticated!');
 });
 
-
 app.use("/events", eventRouter);
 
 // start server listening at port
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
+
 
 // app.get(
 //   "/protected-endpoint",
@@ -63,15 +59,3 @@ app.listen(port, () => {
 //     res.json(req.auth);
 //   }
 // );
-
-// app.use("/events" , (req, res) => {
-//   clerk.expressRequireAuth({
-//     //options
-//   });
-//   next();
-// });
-
-// app.use((err, req, res, next) => {
-//   console.error(err.stack);
-//   res.status(401).send('Unauthenticated!');
-// });
