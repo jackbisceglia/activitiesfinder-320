@@ -28,7 +28,7 @@ export default function Home() {
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error</p>;
-
+  console.log(events)
   const EventList = () => (
     <div className="flex flex-col flex-1 w-auto gap-4">
       {events.map((e) => (
