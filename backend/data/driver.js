@@ -59,6 +59,15 @@ export default class Driver {
         return compatibleEvents;
     }
 
+    transform = (events) => {
+        let retArr = []
+        for (let e of events) {
+            let event = new Event(e.event_id, e.event_name, { startTime: e.event_time, endTime: e.event_time }, { Town: e.event_town, Building: e.event_location }, e.event_link, '', e.event_tags, '', e.event_area)
+            retArr.push(event)
+        }
+        return retArr;
+    }
+
     getSortedEvents = (compatibleEvents, filter) => {
         console.log("Filter Tags: ");
         console.log(filter.getTags());
