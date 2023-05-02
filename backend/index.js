@@ -14,7 +14,6 @@ console.log("Key: " , secretKey);
 
 const clerk = new Clerk({ secretKey: secretKey});
 console.log(clerk);
-// const clientList = await clerk.clients.getClientList();
 
 // middleware
 app.use(cors());
@@ -30,20 +29,12 @@ app.get("/", async (req, res) => {
 
 
 //clerk middleware to protect /events
-// app.use("/events" , (req, res, next) => {
-//   clerk.expressRequireAuth({
-//     //options
-//   });
-//   nexts();
-// });
-
 app.get(
   '/events',
   clerk.expressRequireAuth({
     // ...options
   }),
   (req, res, next) => {
-    // res.json(req.auth);
     next();
   }
 );
@@ -59,14 +50,3 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
-
-
-// app.get(
-//   "/protected-endpoint",
-//   clerk.expressRequireAuth({
-//     // ...options
-//   }),
-//   (req, res) => {
-//     res.json(req.auth);
-//   }
-// );
