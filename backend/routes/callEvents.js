@@ -29,7 +29,7 @@ eventRouter.get("/", async (req, res) => {
         if (error) throw error
         //Only do scoring if has types
         if (typeof (req.query.type) !== 'undefined') {
-            let type = req.query.type.split(",");
+            let type = req.query.type.toString().split(",");
             let eventArray = []
             for (let e of results.rows) {
                 let tagsInCommon = e.event_tags.filter(value => type.includes(value))
@@ -54,18 +54,18 @@ const buildQuery = (queryObj) => {
     let itr = 1;
     let values = []
     if (typeof (queryObj.location) !== 'undefined') {
-        conditions.push(`event_town = $${itr}`);
-        values.push(queryObj.location)
+        conditions.push(`event_town = ANY($${itr})`);
+        values.push(queryObj.location.toString().split(","))
         itr += 1;
     }
     if (typeof (queryObj.area) !== 'undefined') {
-        conditions.push(`event_area = $${itr}`);
-        values.push(queryObj.area)
+        conditions.push(`event_area = ANY($${itr})`);
+        values.push(queryObj.area.toString().split(","))
         itr += 1;
     }
     if (typeof (queryObj.type) !== 'undefined') {
         conditions.push(`($${itr} && event_tags) = true`);
-        values.push(queryObj.type.split(","))
+        values.push(queryObj.type.toString().split(","))
         itr += 1;
     }
     return {
