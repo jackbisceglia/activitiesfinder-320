@@ -102,8 +102,8 @@ export function EventCard({
         className={`${
           eventSaved
             ? "bg-gray-400 hover:bg-gray-500"
-            : "bg-sky-600 hover:bg-sky-700"
-        } px-4 py-[0.375rem] text-xs transition-all duration-100 bg-gray-400 rounded-md  text-white w-min h-min`}
+            : "bg-gradient-to-tr from-violet-500 to-sky-500 text-neutral-100"
+        } px-4 py-[0.375rem] text-xs transition-all duration-100 bg-gray-400 rounded-md  text-white w-min h-min hover:shadow-md shadow-black`}
       >
         {eventSaved ? "Unsave" : "Save"}
       </button>

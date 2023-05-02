@@ -20,7 +20,7 @@ export default function LandingPage() {
 
     if (!signIn || !email || !pass) return;
 
-    const response = await signIn
+    await signIn
       .create({
         identifier: email,
         password: pass,
@@ -37,9 +37,6 @@ export default function LandingPage() {
       .catch((err) => console.error("error", err.errors[0].longMessage));
   };
 
-  console.log(process.env.NEXT_PUBLIC_TESTING === "ShowDevTools");
-  console.log(process.env.NEXT_PUBLIC_TESTING);
-
   return (
     <>
       <SignedIn>
@@ -55,7 +52,7 @@ export default function LandingPage() {
           {process.env.NEXT_PUBLIC_TESTING === "ShowDevTools" && (
             <button
               onClick={signInAsDev}
-              className="px-6 py-2 text-xs font-medium text-white uppercase rounded-md bg-gradient-to-tr from-indigo-500 to-sky-500"
+              className="px-6 py-2 text-xs font-medium text-white uppercase rounded-md bg-gradient-to-tr from-violet-500 to-sky-500"
             >
               Dev Sign In
             </button>
@@ -80,7 +77,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/signup"
-              className="px-4 py-2 transition-all duration-500 border rounded-md hover:text-white bg-gradient-to-tr from-violet-500 to-sky-500 text-neutral-300"
+              className="px-4 py-2 transition-all duration-500 border rounded-md hover:text-white bg-gradient-to-tr from-violet-500 to-sky-500 text-neutral-100"
             >
               Get Started
             </Link>

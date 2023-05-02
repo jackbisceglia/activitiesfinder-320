@@ -47,8 +47,8 @@ const addMockEvent = () => {
 
 const addMockPreferences = () => {
   const preferences = {
-    area: "outdoors",
-    type: "sports",
+    area: "indoor",
+    type: "music",
     location: "amherst",
   };
 
@@ -100,13 +100,14 @@ const Navbar = () => {
     Record<string, string>
   >({});
   const searchParamString = preferenceObjectToString(defaultPreferences);
+  console.log("from f(): ", searchParamString);
 
   const pages: Record<string, PageLink> = {
     home: { title: "Home", href: "/" },
     search: { title: "New Preferences", href: "/preferences" },
     results: {
       title: "Default Preferences",
-      href: `/results${searchParamString}}`,
+      href: `/results${searchParamString && `?${searchParamString}`}`,
     },
   };
 
@@ -131,7 +132,7 @@ const Navbar = () => {
       {/* LINKS */}
       {user.isLoaded && user.isSignedIn ? (
         <ul className="flex gap-8 my-auto">
-          {process.env.NEXT_PUBLIC_ISDEVMODE && <DevTools />}
+          {process.env.NEXT_PUBLIC_TESTING === "ShowDevTools" && <DevTools />}
           <NavLink href={pages.home.href}>
             <li className="py-2">{pages.home.title}</li>
           </NavLink>
