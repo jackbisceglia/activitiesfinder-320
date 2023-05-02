@@ -14,7 +14,6 @@ console.log("Key: " , secretKey);
 
 const clerk = new Clerk({ secretKey: secretKey});
 console.log(clerk);
-// const clientList = await clerk.clients.getClientList();
 
 // middleware
 app.use(cors());
@@ -30,32 +29,24 @@ app.get("/", async (req, res) => {
 
 
 //clerk middleware to protect /events
-app.use("/events" , (req, res, next) => {
+app.get(
+  '/events',
   clerk.expressRequireAuth({
-    //options
-  });
-  next();
-});
+    // ...options
+  }),
+  (req, res, next) => {
+    next();
+  }
+);
+
+app.use("/events", eventRouter);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(401).send('Unauthenticated!');
 });
 
-app.use("/events", eventRouter);
-
 // start server listening at port
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
-
-
-// app.get(
-//   "/protected-endpoint",
-//   clerk.expressWithAuth({
-//     // ...options
-//   }),
-//   (req, res) => {
-//     res.json(req.auth);
-//   }
-// );
