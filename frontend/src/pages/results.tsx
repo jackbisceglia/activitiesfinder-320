@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 
 import { API_URL } from "@/utils/vars";
 import { preferenceObjectToString } from "@/utils/helpers";
+import useFetch from "@/utils/useFetch";
 import { useRouter } from "next/router";
 
 // Fake search results
@@ -51,10 +52,11 @@ const fakeSearchResults = [
 
 export default function Results() {
   const router = useRouter();
-  console.log(router.query)
+  console.log(router.query);
   const [eventResultsLoading, setEventResultsLoading] = useState(true);
   const [eventResultsError, setEventResultsError] = useState(false);
   const [eventResults, setEventResults] = useState<GenericEvent[]>([]);
+  const authedFetch = useFetch();
 
   useEffect(() => {
     if (router.query === undefined) return;
@@ -62,8 +64,11 @@ export default function Results() {
     const fetchResults = async () => {
       try {
         const searchParamString = preferenceObjectToString(router.query);
-        const res = await fetch(`${API_URL}/events?${searchParamString}`);
-        console.log(res);
+        const fetchUrl = `${API_URL}/events${
+          searchParamString && `?${searchParamString}`
+        }`;
+
+        const res = await authedFetch(fetchUrl);
         const data: GenericEvent[] = await res.json();
         console.log(data);
         setEventResults(() => data);
@@ -77,6 +82,20 @@ export default function Results() {
     fetchResults();
   }, [router.query]);
 
+  const EventList = () => {
+    if (!eventResults.length) {
+      return <p className="font-bold text-rose-600">{"No Results Found :("}</p>;
+    }
+
+    return (
+      <>
+        {eventResults.map((result) => (
+          <EventCard key={result.eventId} event={result} eventSaved={false} />
+        ))}
+      </>
+    );
+  };
+
   return (
     <div className="flex flex-col flex-1 h-full gap-6 py-12">
       <h1 className="text-3xl font-medium">Search Results</h1>
@@ -86,9 +105,7 @@ export default function Results() {
         <p className="font-bold text-rose-600">Error Loading Results!</p>
       ) : (
         <ul className="space-y-4">
-          {eventResults.map((result) => (
-            <EventCard key={result.eventId} event={result} eventSaved={false} />
-          ))}
+          <EventList />
         </ul>
       )}
     </div>

@@ -1,7 +1,7 @@
-import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { preferenceObjectToString } from "@/utils/helpers";
+import { useRouter } from "next/router";
+import { useState } from "react";
 
 export default function Preferences() {
   const [preferences, setPreferences] = useState<Record<string, string[]>>({});
@@ -21,118 +21,144 @@ export default function Preferences() {
   const handleClick = () => {
     router.push(`/results?${preferenceObjectToString(preferences)}`);
   };
- 
+
   return (
-    <div className="text-center">
-      <h1 className="text-4xl mb-10">Choose Preferences</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="flex flex-col items-center p-4 border-2 border-blue-500 rounded-md">
-          <h2 className="text-2xl mb-4">Area</h2>
-          <label className="inline-flex items-center mb-2">
+    <div className="flex flex-col flex-1 h-full gap-6 py-12">
+      <h1 className="text-3xl font-medium">Choose Preferences</h1>
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="flex flex-col items-center justify-start gap-2 pt-6 pb-8 border-2 rounded-md border-sky-600">
+          <h2 className="mb-4 text-2xl">Area</h2>
+          <div className="inline-flex items-center mb-2">
             <input
               type="checkbox"
               name="area"
               value="indoor"
-              className="text-blue-500"
+              id="indoor"
+              className="w-4 h-4 text-white accent-sky-600"
               onChange={handleChange}
             />
-            <span className="ml-2">Indoor</span>
-          </label>
-          <label className="inline-flex items-center">
+            <label htmlFor="indoor" className="ml-2">
+              Indoor
+            </label>
+          </div>
+          <div className="inline-flex items-center">
             <input
               type="checkbox"
               name="area"
               value="outdoor"
-              className="text-blue-500"
+              id="outdoor"
+              className="w-4 h-4 accent-sky-600"
               onChange={handleChange}
             />
-            <span className="ml-2">Outdoor</span>
-          </label>
+            <label htmlFor="outdoor" className="ml-2">
+              Outdoor
+            </label>
+          </div>
         </div>
-        <div className="flex flex-col items-center p-4 border-2 border-blue-500 rounded-md">
-          <h2 className="text-2xl mb-4">Type</h2>
-          <label className="inline-flex items-center mb-2">
+        <div className="flex flex-col items-center justify-start gap-2 pt-6 pb-8 border-2 rounded-md border-sky-600">
+          <h2 className="mb-4 text-2xl">Type</h2>
+          <div className="inline-flex items-center mb-2">
             <input
               type="checkbox"
               name="type"
+              id="music"
               value="music"
-              className="text-blue-500"
+              className="w-4 h-4 accent-sky-600"
               onChange={handleChange}
             />
-            <span className="ml-2">Music</span>
-          </label>
-          <label className="inline-flex items-center mb-2">
+            <label htmlFor="music" className="ml-2">
+              Music
+            </label>
+          </div>
+          <div className="inline-flex items-center mb-2">
             <input
               type="checkbox"
               name="type"
               value="education"
-              className="text-blue-500"
+              id="education"
+              className="w-4 h-4 accent-sky-600"
               onChange={handleChange}
             />
-            <span className="ml-2">Education</span>
-          </label>
-          <label className="inline-flex items-center">
+            <label htmlFor="education" className="ml-2">
+              Education
+            </label>
+          </div>
+          <div className="inline-flex items-center">
             <input
               type="checkbox"
               name="type"
               value="sports"
-              className="text-blue-500"
+              id="sports"
+              className="w-4 h-4 accent-sky-600"
               onChange={handleChange}
             />
-            <span className="ml-2">Sports</span>
-          </label>
+            <label htmlFor="sports" className="ml-2">
+              Sports
+            </label>
+          </div>
         </div>
-        <div className="flex flex-col items-center p-4 border-2 border-blue-500 rounded-md">
-          <h2 className="text-2xl mb-4">Location</h2>
-          <label className="inline-flex items-center mb-2">
+        <div className="flex flex-col items-center justify-start gap-2 pt-6 pb-8 border-2 rounded-md border-sky-600">
+          <h2 className="mb-4 text-2xl">Location</h2>
+          <div className="inline-flex items-center mb-2">
             <input
               type="checkbox"
               name="location"
-              value="Amherst"
-              className="text-blue-500"
+              value="amherst"
+              id="amherst"
+              className="w-4 h-4 accent-sky-600"
               onChange={handleChange}
             />
-            <span className="ml-2">Amherst</span>
-          </label>
-          <label className="inline-flex items-center mb-2">
+            <label htmlFor="amherst" className="ml-2">
+              Amherst
+            </label>
+          </div>
+          <div className="inline-flex items-center mb-2">
             <input
               type="checkbox"
               name="location"
-              value="Hadley"
-              className="text-blue-500"
+              value="hadley"
+              id="hadley"
+              className="w-4 h-4 accent-sky-600"
               onChange={handleChange}
             />
-            <span className="ml-2">Hadley</span>
-          </label>
-          <label className="inline-flex items-center mb-2">
+            <label htmlFor="hadley" className="ml-2">
+              Hadley
+            </label>
+          </div>
+          <div className="inline-flex items-center mb-2">
             <input
               type="checkbox"
               name="location"
-              value="Sunderland"
-              className="text-blue-500"
+              value="sunderland"
+              id="sunderland"
+              className="w-4 h-4 accent-sky-600"
               onChange={handleChange}
             />
-            <span className="ml-2">Sunderland</span>
-          </label>
-          <label className="inline-flex items-center">
+            <label htmlFor="sunderland" className="ml-2">
+              Sunderland
+            </label>
+          </div>
+          <div className="inline-flex items-center">
             <input
               type="checkbox"
               name="location"
-              value="Northampton"
-              className="text-blue-500"
+              value="northampton"
+              id="northampton"
+              className="w-4 h-4 accent-sky-600"
               onChange={handleChange}
             />
-            <span className="ml-2">Northampton</span>
-          </label>
+            <label htmlFor="northampton" className="ml-2">
+              Northampton
+            </label>
+          </div>
         </div>
       </div>
       <button
         onClick={handleClick}
-        className="inline-block px-6 py-3 mt-10 font-medium transition-colors duration-300 rounded-md shadow-md text-white bg-blue-500 hover:bg-blue-600"
+        className="inline-block px-6 py-3 mt-10 font-medium transition-colors duration-200 rounded-md shadow-md bg-gradient-to-tr from-violet-500 to-sky-500 text-neutral-100"
       >
         Show Search Results
       </button>
     </div>
   );
 }
-             

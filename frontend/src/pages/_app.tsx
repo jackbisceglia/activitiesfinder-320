@@ -29,10 +29,8 @@ export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
   const publicPages = ["landing", "signin", "signup"];
-  
-  const publicPagePaths = publicPages.map((p) => `/${p}`);
 
-  console.log(router);
+  const publicPagePaths = publicPages.map((p) => `/${p}`);
 
   const Page = () => (
     <div className={`${font.className} min-h-screen flex flex-col`}>
