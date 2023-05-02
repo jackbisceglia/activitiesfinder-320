@@ -25,7 +25,6 @@ const eventReducer = (
     case "LOAD_ALL":
       return JSON.parse(localStorage.getItem("events") ?? "[]");
     default:
-      console.log("default");
       return events;
   }
 };
@@ -36,7 +35,6 @@ export const useEventState = (defaultEvents?: GenericEvent[]) => {
     eventReducer,
     defaultEvents ?? []
   );
-  console.log(events);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 

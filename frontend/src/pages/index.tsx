@@ -25,7 +25,6 @@ const FindEventsPanel = ({ hasEvents }: { hasEvents: boolean }) => {
 // HOMEPAGE
 export default function Home() {
   const { events, loading, error, eventStateDispatch } = useEventState();
-
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error</p>;
 

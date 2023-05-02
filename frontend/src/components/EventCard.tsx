@@ -50,11 +50,9 @@ export function EventCard({
 
   const handleSave = () => {
     if (!eventStateDispatch) {
-      console.log("not updating state yet");
       return;
     }
     if (eventSaved) {
-      console.log("adding");
       eventStateDispatch({
         type: "REMOVE",
         payload: {
@@ -62,7 +60,6 @@ export function EventCard({
         },
       });
     } else {
-      console.log("removing");
       eventStateDispatch({
         type: "ADD",
         payload: {

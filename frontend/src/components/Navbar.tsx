@@ -46,7 +46,6 @@ const addMockEvent = () => {
 };
 
 const addMockPreferences = () => {
-  console.log("ADDING MOCK PREFERENCES");
   const preferences = {
     area: "outdoors",
     type: "sports",
@@ -107,7 +106,7 @@ const Navbar = () => {
     search: { title: "New Preferences", href: "/preferences" },
     results: {
       title: "Default Preferences",
-      href: `/results${searchParamString && `?${searchParamString}`}`,
+      href: `/results${searchParamString}}`,
     },
   };
 

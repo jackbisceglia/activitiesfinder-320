@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 
 import { API_URL } from "@/utils/vars";
 import { preferenceObjectToString } from "@/utils/helpers";
+import useFetch from "@/utils/useFetch";
 import { useRouter } from "next/router";
 
 // Fake search results
@@ -54,6 +55,7 @@ export default function Results() {
   const [eventResultsLoading, setEventResultsLoading] = useState(true);
   const [eventResultsError, setEventResultsError] = useState(false);
   const [eventResults, setEventResults] = useState<GenericEvent[]>([]);
+  const authedFetch = useFetch();
 
   useEffect(() => {
     if (router.query === undefined) return;
@@ -61,8 +63,8 @@ export default function Results() {
     const fetchResults = async () => {
       try {
         const searchParamString = preferenceObjectToString(router.query);
-        const res = await fetch(`${API_URL}/events?${searchParamString}`);
-        console.log(res);
+
+        const res = await authedFetch(`${API_URL}/events${searchParamString}`);
         const data: GenericEvent[] = await res.json();
         console.log(data);
         setEventResults(() => data);
