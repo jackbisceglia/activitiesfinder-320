@@ -30,19 +30,30 @@ app.get("/", async (req, res) => {
 
 
 //clerk middleware to protect /events
-app.use("/events" , (req, res, next) => {
+// app.use("/events" , (req, res, next) => {
+//   clerk.expressRequireAuth({
+//     //options
+//   });
+//   nexts();
+// });
+
+app.get(
+  '/events',
   clerk.expressRequireAuth({
-    //options
-  });
-  next();
-});
+    // ...options
+  }),
+  (req, res, next) => {
+    // res.json(req.auth);
+    next();
+  }
+);
+
+app.use("/events", eventRouter);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(401).send('Unauthenticated!');
 });
-
-app.use("/events", eventRouter);
 
 // start server listening at port
 app.listen(port, () => {
@@ -52,7 +63,7 @@ app.listen(port, () => {
 
 // app.get(
 //   "/protected-endpoint",
-//   clerk.expressWithAuth({
+//   clerk.expressRequireAuth({
 //     // ...options
 //   }),
 //   (req, res) => {
