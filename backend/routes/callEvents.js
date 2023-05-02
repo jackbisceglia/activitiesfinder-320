@@ -16,30 +16,62 @@ const credentials = {
 const eventRouter = express.Router();
 
 eventRouter.get("/", async (req, res) => {
-    let area = req.query.area;
-    let type = req.query.type.split(',');
-    let location = req.query.location;
-    const eventsQuery = {
+    let conditions = buildQuery(req.query);
+    let sqlQuery = 'SELECT * from public.events' + conditions.text;
+    let eventsQuery = {
         name: 'fetch-events',
-        text: `SELECT * from public.events WHERE event_town = $1 AND event_area = $2 AND ($3 && event_tags) = true;`,
-        values: [location, area, type]
+        text: sqlQuery,
+        values: conditions.values
     }
     const client = new Client(credentials);
     await client.connect();
     client.query(eventsQuery, (error, results) => {
         if (error) throw error
-        let eventArray = []
-        for (let e of results.rows) {
-            let tagsInCommon = e.event_tags.filter(value => type.includes(value))
-            eventArray.push({ event: e, score: tagsInCommon.length })
+        //Only do scoring if has types
+        if (typeof (req.query.type) !== 'undefined') {
+            let type = req.query.type.split(",");
+            let eventArray = []
+            for (let e of results.rows) {
+                let tagsInCommon = e.event_tags.filter(value => type.includes(value))
+                eventArray.push({ event: e, score: tagsInCommon.length })
+            }
+            eventArray.sort((a, b) => parseInt(b.score) - parseInt(a.score))
+            let returnArray = eventArray.map(element => element.event)
+            let eventDriver = new Driver({}, returnArray)
+            returnArray = eventDriver.transform(returnArray);
+            res.status(200).json(returnArray);
+        } else {
+            let eventDriver = new Driver({}, results.rows);
+            let returnArray = eventDriver.transform(results.rows);
+            res.status(200).json(returnArray);
         }
-        eventArray.sort((a, b) => parseInt(b.score) - parseInt(a.score))
-        let returnArray = eventArray.map(element => element.event)
-        let eventDriver = new Driver({}, returnArray)
-        returnArray = eventDriver.transform(returnArray);
-        res.status(200).json(returnArray);
         client.end();
     });
 });
+
+const buildQuery = (queryObj) => {
+    let conditions = []
+    let itr = 1;
+    let values = []
+    if (typeof (queryObj.location) !== 'undefined') {
+        conditions.push(`event_town = $${itr}`);
+        values.push(queryObj.location)
+        itr += 1;
+    }
+    if (typeof (queryObj.area) !== 'undefined') {
+        conditions.push(`event_area = $${itr}`);
+        values.push(queryObj.area)
+        itr += 1;
+    }
+    if (typeof (queryObj.type) !== 'undefined') {
+        conditions.push(`($${itr} && event_tags) = true`);
+        values.push(queryObj.type.split(","))
+        itr += 1;
+    }
+    return {
+        text: conditions.length ? ' WHERE ' + conditions.join(' AND ') : '',
+        values: values
+    }
+}
 
 export default eventRouter;

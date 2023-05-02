@@ -52,6 +52,7 @@ const fakeSearchResults = [
 
 export default function Results() {
   const router = useRouter();
+  console.log(router.query)
   const [eventResultsLoading, setEventResultsLoading] = useState(true);
   const [eventResultsError, setEventResultsError] = useState(false);
   const [eventResults, setEventResults] = useState<GenericEvent[]>([]);
