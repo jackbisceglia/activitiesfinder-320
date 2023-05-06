@@ -57,27 +57,32 @@ export default class Event {
     removeTag = (TagToRemove) => { this.tags = this.tags.filter(x => x !== TagToRemove); };
 
     isCompatible = (filter) => {
-
+        let status = 1;
         if (this.getSeconds() < filter.getStartSeconds() || this.getSeconds() > filter.getEndSeconds()) {
             console.log("Time out of range");
-            return false;
+            status--;
         }
 
         if (filter.getLocation().Town !== this.getLocation().Town) {
             console.log("Filter town: " + filter.getLocation().Town + " Event town: " + this.getLocation().Town);
-            return false;
+            status--;
         }
 
         if (filter.getArea() !== "None" && filter.getArea() !== this.getArea()) {
             console.log("Area doesn't match");
-            return false;
+            status--;
         }
 
-        return true;
+        return status;
     }
 
     getScore = (filter) => {
-        if (!this.isCompatible(filter)) { return -1; }
+        let status = this.isCompatible(filter);
+        let score = 1;
+
+        if (status < 0) {return -1;}
+        //Score of 0 indicates its almost compatible
+        else if (status === 0) {return 0}
 
         const filter_set = new Set();
         let temp = filter.getTags();
@@ -85,7 +90,7 @@ export default class Event {
             filter_set.add(JSON.stringify(temp[i]));
         }
 
-        let score = 0;
+        
         let arr = this.getTags();
         for (let i = 0; i < arr.length; ++i) {
             if (filter_set.has(JSON.stringify(arr[i]))) {

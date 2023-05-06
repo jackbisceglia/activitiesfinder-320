@@ -37,9 +37,9 @@ function createDummyData(s) {
 
 export default class Driver {
 
-    constructor(filter, eventData) {
+    constructor(filter) {
         this.filter = filter;
-        //eventData = createDummyData(10);
+        let eventData = createDummyData(10);
         this.eventData = eventData;
     }
 
@@ -68,9 +68,10 @@ export default class Driver {
         return retArr;
     }
 
-    getSortedEvents = (compatibleEvents, filter) => {
+    getSortedEvents = () => {
+        let compatibleEvents = this.getCompatibleEvents();
         console.log("Filter Tags: ");
-        console.log(filter.getTags());
+        //console.log(filter.getTags());
         let res = [];
         for (let i = 0; i < compatibleEvents.length; ++i) {
             res.push(compatibleEvents[i].event);
@@ -79,3 +80,9 @@ export default class Driver {
     }
 
 }
+
+let driver = new Driver(new Filter({startTime:{day:0 ,hours:1 ,minutes:2 ,am:true }, endTime:{day:1 ,hours:2 ,minutes:3 ,am:false }},{Town:"Amherst", Building: " "}, [], "Indoors"));
+console.log(driver.getSortedEvents());
+
+
+
