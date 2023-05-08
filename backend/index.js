@@ -4,15 +4,16 @@ import { config } from 'dotenv';
 config({ path: './.env.local' });
 import Clerk from '@clerk/clerk-sdk-node/esm/instance';
 import express from "express";
+import userRouter from "./routes/callUsers.js"
 
 // init app
 const port = process.env.PORT || 8080;
 const app = express();
 
 const secretKey = process.env.CLERK_SECRET_KEY;
-console.log("Key: " , secretKey);
+console.log("Key: ", secretKey);
 
-const clerk = new Clerk({ secretKey: secretKey});
+const clerk = new Clerk({ secretKey: secretKey });
 console.log(clerk);
 
 // middleware
@@ -29,17 +30,27 @@ app.get("/", async (req, res) => {
 
 
 //clerk middleware to protect /events
-app.get(
-  '/events',
-  clerk.expressRequireAuth({
-    // ...options
-  }),
-  (req, res, next) => {
-    next();
-  }
-);
+// app.get(
+//   '/events',
+//   clerk.expressRequireAuth({
+//     // ...options
+//   }),
+//   (req, res, next) => {
+//     next();
+//   }
+// );
 
+//get
 app.use("/events", eventRouter);
+
+//post
+app.use('/saveEvent', userRouter);
+
+//get
+app.use('/getSavedEvents', userRouter);
+
+//delete
+app.use('/deleteEvent', userRouter);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
