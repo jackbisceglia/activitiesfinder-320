@@ -30,15 +30,15 @@ app.get("/", async (req, res) => {
 
 
 //clerk middleware to protect /events
-// app.get(
-//   '/events',
-//   clerk.expressRequireAuth({
-//     // ...options
-//   }),
-//   (req, res, next) => {
-//     next();
-//   }
-// );
+app.get(
+  '/events',
+  clerk.expressRequireAuth({
+    // ...options
+  }),
+  (req, res, next) => {
+    next();
+  }
+);
 
 //get
 app.use("/events", eventRouter);
