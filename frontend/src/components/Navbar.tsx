@@ -100,7 +100,6 @@ const Navbar = () => {
     Record<string, string>
   >({});
   const searchParamString = preferenceObjectToString(defaultPreferences);
-  console.log("from f(): ", searchParamString);
 
   const pages: Record<string, PageLink> = {
     home: { title: "Home", href: "/" },
