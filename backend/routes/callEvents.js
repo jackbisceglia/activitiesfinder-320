@@ -55,7 +55,11 @@ const buildQuery = (queryObj) => {
   let values = [];
   if (typeof queryObj.location !== "undefined") {
     conditions.push(`event_town = ANY($${itr})`);
-    values.push(queryObj.location.toString().split(","));
+    let town_vals = queryObj.location.toString().split(",");
+    for (let i = 0; i < town_vals.length; i++) {
+      town_vals[i] = town_vals[i].charAt(0).toUpperCase() + town_vals[i].slice(1);
+    }
+    values.push(town_vals);
     itr += 1;
   }
   if (typeof queryObj.area !== "undefined") {
@@ -65,7 +69,11 @@ const buildQuery = (queryObj) => {
   }
   if (typeof queryObj.type !== "undefined") {
     conditions.push(`($${itr} && event_tags) = true`);
-    values.push(queryObj.type.toString().split(","));
+    let type_vals = queryObj.type.toString().split(",");
+    for (let i = 0; i < type_vals.length; i++) {
+      type_vals[i] = type_vals[i].charAt(0).toUpperCase() + type_vals[i].slice(1);
+    }
+    values.push(type_vals);
     itr += 1;
   }
   return {
