@@ -103,9 +103,9 @@ const Navbar = () => {
 
   const pages: Record<string, PageLink> = {
     home: { title: "Home", href: "/" },
-    search: { title: "Find Events", href: "/preferences" },
+    search: { title: "Start Fresh Search", href: "/preferences" },
     results: {
-      title: "Last Preferences",
+      title: "Find Similar Events",
       href: `/results${searchParamString && `?${searchParamString}`}`,
     },
   };

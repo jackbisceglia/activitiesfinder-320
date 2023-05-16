@@ -15,7 +15,7 @@ const FindEventsPanel = ({ hasEvents }: { hasEvents: boolean }) => {
   return (
     <div className={hasEvents ? singleColumnStyle : fullScreenStyle}>
       <Link
-        href="results"
+        href="preferences"
         className="px-6 py-3 font-medium transition-colors duration-300 rounded-md shadow-md bg-sky-100 hover:bg-sky-50"
       >
         {hasEvents ? "Find More Events" : "Find Events"}
