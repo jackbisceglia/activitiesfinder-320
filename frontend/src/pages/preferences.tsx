@@ -74,13 +74,65 @@ export default function Preferences() {
             <input
               type="checkbox"
               name="type"
-              value="education"
-              id="education"
+              value="educational"
+              id="educational"
               className="w-4 h-4 accent-sky-600"
               onChange={handleChange}
             />
-            <label htmlFor="education" className="ml-2">
-              Education
+            <label htmlFor="educational" className="ml-2">
+              Educational
+            </label>
+          </div>
+          <div className="inline-flex items-center mb-2">
+            <input
+              type="checkbox"
+              name="type"
+              value="cultural"
+              id="cultural"
+              className="w-4 h-4 accent-sky-600"
+              onChange={handleChange}
+            />
+            <label htmlFor="cultural" className="ml-2">
+              Cultural
+            </label>
+          </div>
+          <div className="inline-flex items-center mb-2">
+            <input
+              type="checkbox"
+              name="type"
+              value="arts"
+              id="arts"
+              className="w-4 h-4 accent-sky-600"
+              onChange={handleChange}
+            />
+            <label htmlFor="arts" className="ml-2">
+              Arts
+            </label>
+          </div>
+          <div className="inline-flex items-center mb-2">
+            <input
+              type="checkbox"
+              name="type"
+              value="food"
+              id="food"
+              className="w-4 h-4 accent-sky-600"
+              onChange={handleChange}
+            />
+            <label htmlFor="food" className="ml-2">
+              Food
+            </label>
+          </div>
+          <div className="inline-flex items-center mb-2">
+            <input
+              type="checkbox"
+              name="type"
+              value="social"
+              id="social"
+              className="w-4 h-4 accent-sky-600"
+              onChange={handleChange}
+            />
+            <label htmlFor="social" className="ml-2">
+              Social
             </label>
           </div>
           <div className="inline-flex items-center">
