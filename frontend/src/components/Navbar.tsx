@@ -103,9 +103,9 @@ const Navbar = () => {
 
   const pages: Record<string, PageLink> = {
     home: { title: "Home", href: "/" },
-    search: { title: "New Preferences", href: "/preferences" },
+    search: { title: "Find Events", href: "/preferences" },
     results: {
-      title: "Default Preferences",
+      title: "Last Preferences",
       href: `/results${searchParamString && `?${searchParamString}`}`,
     },
   };
@@ -135,25 +135,17 @@ const Navbar = () => {
           <NavLink href={pages.home.href}>
             <li className="py-2">{pages.home.title}</li>
           </NavLink>
-          {/* Dropdown */}
-          <li className="relative">
+          {/* Buttons replacing Dropdown */}
+          <NavLink href={pages.search.href}>
             <button className="flex items-center gap-2 py-2 transition-colors duration-150 text-neutral-900 hover:text-sky-600 peer">
-              Find Events
-              <ChevronDown />
+              {pages.search.title}
             </button>
-            <ul className="hover:flex absolute hidden px-6 pr-12 gap-4 py-5 text-left flex-col rounded-2xl rounded-tr-none shadow-lg w-[16rem] bg-gray-50 top-10 right-3 peer-hover:flex peer-hover:open open:flex">
-              <NavLink href={pages.search.href}>
-                <li className="transition-all duration-150 hover:pl-2">
-                  {pages.search.title}
-                </li>
-              </NavLink>
-              <NavLink href={pages.results.href}>
-                <li className="transition-all duration-150 hover:pl-2">
-                  {pages.results.title}
-                </li>
-              </NavLink>
-            </ul>
-          </li>
+          </NavLink>
+          <NavLink href={pages.results.href}>
+            <button className="flex items-center gap-2 py-2 transition-colors duration-150 text-neutral-900 hover:text-sky-600 peer">
+              {pages.results.title}
+            </button>
+          </NavLink>
           <UserButton
             appearance={{
               elements: {
