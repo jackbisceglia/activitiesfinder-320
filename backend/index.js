@@ -1,25 +1,23 @@
+import Clerk from "@clerk/clerk-sdk-node/esm/instance";
+import { config } from "dotenv";
 import cors from "cors";
 import eventRouter from "./routes/callEvents.js";
-import { config } from 'dotenv';
-config({ path: './.env.local' });
-import Clerk from '@clerk/clerk-sdk-node/esm/instance';
 import express from "express";
-import userRouter from "./routes/callUsers.js"
+import userRouter from "./routes/callUsers.js";
+config({ path: "./.env.local" });
 
 // init app
 const port = process.env.PORT || 8080;
 const app = express();
 
 const secretKey = process.env.CLERK_SECRET_KEY;
-console.log("Key: ", secretKey);
+// console.log("Key: ", secretKey);
 
 const clerk = new Clerk({ secretKey: secretKey });
-console.log(clerk);
-
-// middleware
+// middleware for all routes
 app.use(cors());
+app.use(express.json());
 
-// subrouters
 // routers exported from files in /routes will be defined here
 // eg. all routes beginning with /user will be handled by userRouter
 // app.use("/user", userRouter);
@@ -28,33 +26,16 @@ app.get("/", async (req, res) => {
   res.send("Hello World!");
 });
 
+app.use(clerk.expressRequireAuth({})); // protect all following routes
 
-//clerk middleware to protect /events
-app.get(
-  '/events',
-  clerk.expressRequireAuth({
-    // ...options
-  }),
-  (req, res, next) => {
-    next();
-  }
-);
-
-//get
+// subrouters
 app.use("/events", eventRouter);
 
-//post
-app.use('/saveEvent', userRouter);
-
-//get
-app.use('/getSavedEvents', userRouter);
-
-//delete
-app.use('/deleteEvent', userRouter);
+app.use("/users", userRouter);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(401).send('Unauthenticated!');
+  res.status(401).send("Unauthenticated!");
 });
 
 // start server listening at port

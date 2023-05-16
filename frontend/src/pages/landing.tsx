@@ -27,11 +27,9 @@ export default function LandingPage() {
       })
       .then((result) => {
         if (result.status === "complete") {
-          console.log(result);
           router.reload();
           // setActive({ session: result.createdSessionId });
         } else {
-          console.log(result);
         }
       })
       .catch((err) => console.error("error", err.errors[0].longMessage));

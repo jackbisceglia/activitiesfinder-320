@@ -21,7 +21,6 @@ import { ParsedUrlQuery } from "querystring";
 export const preferenceObjectToString = (
   preferenceRecord: Record<string, string[] | string> | ParsedUrlQuery
 ) => {
-  console.log(preferenceRecord);
   if (!preferenceRecord) return "";
 
   return Object.entries(preferenceRecord)

@@ -5,6 +5,8 @@ import { API_URL } from "@/utils/vars";
 import { preferenceObjectToString } from "@/utils/helpers";
 import useFetch from "@/utils/useFetch";
 import { useRouter } from "next/router";
+import { useSavedEvents } from ".";
+import useToggleSave from "@/utils/useToggleSave";
 
 // Fake search results
 const fakeSearchResults = [
@@ -52,36 +54,57 @@ const fakeSearchResults = [
 
 export default function Results() {
   const router = useRouter();
-  console.log(router.query);
   const [eventResultsLoading, setEventResultsLoading] = useState(true);
   const [eventResultsError, setEventResultsError] = useState(false);
   const [eventResults, setEventResults] = useState<GenericEvent[]>([]);
+  const { events: savedEvents, refetch } = useSavedEvents();
+  const { mutate } = useToggleSave();
   const authedFetch = useFetch();
+
+  const eventResultsWithSaveData: GenericEvent[] = eventResults.map((event) => {
+    if (event.saved) {
+      return event;
+    }
+
+    return {
+      ...event,
+      saved: savedEvents.some((e) => e.eventId === event.eventId),
+    };
+  });
+
+  const fetchResults = async (fullReload?: boolean) => {
+    fullReload && setEventResultsLoading(true);
+    try {
+      const searchParamString = preferenceObjectToString(router.query);
+      const fetchUrl = `${API_URL}/events${
+        searchParamString && `?${searchParamString}`
+      }`;
+
+      const res = await authedFetch(fetchUrl);
+      const data: GenericEvent[] = await res.json();
+      setEventResults(() => data);
+      setEventResultsLoading(() => false);
+    } catch (error) {
+      setEventResultsLoading(false);
+      setEventResultsError(true);
+    }
+  };
 
   useEffect(() => {
     if (router.query === undefined) return;
 
-    const fetchResults = async () => {
-      try {
-        const searchParamString = preferenceObjectToString(router.query);
-        const fetchUrl = `${API_URL}/events${
-          searchParamString && `?${searchParamString}`
-        }`;
-
-        const res = await authedFetch(fetchUrl);
-        const data: GenericEvent[] = await res.json();
-        console.log(data);
-        setEventResults(() => data);
-        setEventResultsLoading(() => false);
-      } catch (error) {
-        setEventResultsLoading(false);
-        setEventResultsError(true);
-      }
-    };
-
-    fetchResults();
+    fetchResults(true);
   }, [router.query]);
 
+  const onSave = async (eventId: number, action: "SAVE" | "UNSAVE") => {
+    try {
+      await mutate(eventId, action);
+      fetchResults();
+      refetch();
+    } catch (e) {
+      console.log(e);
+    }
+  };
   const EventList = () => {
     if (!eventResults.length) {
       return <p className="font-bold text-rose-600">{"No Results Found :("}</p>;
@@ -89,8 +112,13 @@ export default function Results() {
 
     return (
       <>
-        {eventResults.map((result) => (
-          <EventCard key={result.eventId} event={result} eventSaved={false} />
+        {eventResultsWithSaveData.map((result) => (
+          <EventCard
+            key={result.eventId}
+            event={result}
+            eventSaved={result.saved}
+            onSave={onSave}
+          />
         ))}
       </>
     );
