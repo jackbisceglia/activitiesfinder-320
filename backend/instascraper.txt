@@ -1,0 +1,117 @@
+import numpy
+import instaloader
+import urllib
+import re  #built-in library for regular expressions
+import cv2
+import pytesseract
+from PIL import Image
+import requests
+import re
+
+#creating an instance of the instaloader library
+loader = instaloader.Instaloader()
+
+#insta usernames we want to scrape: 
+#if the username has umass in it and contains umass amherst in the bio
+#some profiles require authentication to access their information even if they are public
+usernames = []
+for profile in instaloader.Profile.from_username(loader.context, 'umass'):
+    if (profile.is_private == False):
+        bio = profile.biography.lower()
+        if ('umassamherst' in bio) or ('umass amherst' in bio):
+            usernames.append(profile.username)
+
+print("started printing here")          
+print (usernames)
+            
+events = []
+
+for username in usernames:
+    profile = instaloader.Profile.from_username(loader.context,username)
+    
+    # Regular expressions for matching event-related keywords
+    keyword_regex = r'(event|concert|performance|show|exhibition|activity|workshop|meeting|match)'
+    phrase_regex = r'\b(\w+\s?){1,4}(event|concert|performance|show|exhibition|activity|workshop|meeting|match)\b'
+    name_regex = r'[A-Za-z]{3,} (Fest|Festival|Jam|Concert|Party|Show|Gala|Expo|Event)'
+
+    # Regular expression for matching date formats
+    # MM/DD/YYYY  MM.DD.YYYY  MM-DD-YYYY  MM/DD/YY  DD/MM/YYYY  YYYY/MM/DD .... possible combinations with separators '/', '.', '-' 
+    date_regex = r'\d{1,2}([/\-.])\d{1,2}\1(\d{2}|\d{4})|\d{4}([/\-.])\d{1,2}\2\d{1,2}'
+
+    # Regular expression for matching time formats
+    time_regex = r'((1[0-2]|[1-9]):([0-5][0-9])(\s?[AP][M]|[ap][m]))|((2[0-3]|[0-1][0-9]):([0-5][0-9]))'
+
+    # Regular expression for matching location or venue information
+    location_regex = r'(at|in|venue:|location:)\s*(.+)'
+
+    # Combine regular expressions to match event information
+    event_regex = f'({keyword_regex}|{phrase_regex}|{name_regex}).*({date_regex}).*({time_regex}).*({location_regex})'
+       
+    #searching through posts
+    for post in profile.get_posts():
+        #scraping algorithm
+        #if it contains the word "event" in the caption
+        #check the caption of the post for specific keywords
+        #what keywords
+        #analyzing the post's location or hashtags
+        #extract the date, time, location, and description of the event
+        #store the above information in a data structure and then send this to the database
+        #use python's regular expression or NLP libraries to extract the relevant information
+        
+        caption = post.caption.lower()
+        #first we check if the post is event-related:
+        is_event_present = re.search(f'{keyword_regex}|{phrase_regex}|{name_regex}', caption, flags=re.IGNORECASE) 
+        if (is_event_present): 
+            #downloading the post(media file) from the profile
+            loader.download_post(post, target=f"{profile.username}/{post.date_local}_{post.shortcode}")
+            
+            matches = re.search(event_regex, caption, flags=re.IGNORECASE)
+            
+            #matches will be true if any of the below fields are true
+            if matches:
+                event_name = matches.group(1)
+                event_date = matches.group(5)
+                event_time = matches.group(7)
+                event_location = matches.group(8) or matches.group(10) or matches.group(12) or matches.group(14)
+            
+            #if any of the above fields are None-->we will extract the missing information from the image    
+            if not all([event_name, event_date, event_time, event_location]):
+                image_url = post.url  #getting the image url of the post
+                urllib.request.urlretrieve(image_url, "post_image.jpg")  #downloading the image and saving it to the local system
+                image = cv2.imread("post_image.jpg")  #reading the image using OpenCV
+                
+                #image-processing algorithm
+                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)   #converting the image to grayscale
+                thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU[1]) #applying Otsu's thresholding
+                
+                text = pytesseract.image_to_string(thresh, config='--psm 11')  #performing text detection-->using Pytesseract lib
+                
+                if event_name is None:
+                    if (re.findall(name_regex, text)):
+                        event_name = re.search(name_regex, text)
+                        
+                if event_date is None:
+                    if (re.findall(date_regex, text)):
+                        event_date = re.search(date_regex, text)
+                        
+                if event_time is None:
+                    if (re.findall(time_regex, text)):
+                        event_time = re.search(time_regex, text)
+                        
+                if event_location is None:
+                    if (re.findall(location_regex, text)):
+                        event_location = re.search(location_regex, text)
+            
+            events.append()            
+            
+                                
+
+        
+    #search through the stories, highlights --> image processing
+    #use python image processing libraries for insta stories --> gives date, time, location
+        
+        
+
+
+# command to activate the virtual environment again:
+# source venv/bin/activate
