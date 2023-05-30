@@ -1,19 +1,118 @@
 import requests
 from datetime import date
+from datetime import datetime
 import datetime
 import schedule
 import time
+import psycopg2
+from dateutil import parser
+from bs4 import BeautifulSoup
+from serpapi import GoogleSearch
 
+#Defining global variables:
+Global_event_id = 1
 last_run_date = None
 
-def web_scraper():
-    global last_run_date
-    
-    url = "https://umassamherst.campuslabs.com/engage/api/discovery/event/search"
+#establishing connection to the database:
+conn = psycopg2.connect(
+    database = "postgres",
+    user = "postgres",
+    password = "activities1",
+    host = "activities-finder.cxsdr7lmdwcg.us-east-2.rds.amazonaws.com",
+    port = "5432"
+)
 
+#helper method for the webscrape method
+def is_outdoor_location(location,description):
+    outdoor_keywords = ['park', 'garden', 'courtyard', 'outdoor', 'outside', 'field', 'stadium','terrace','patio','plaza','beach','picnic','campground','trail','forest','mountain','lake','river','rooftop']
+    for keyword in outdoor_keywords:
+        if (keyword in location.lower()) or (keyword in description.lower()):
+            return True
+    return False
+
+def replace_search_word(url, search_number):
+    return url.replace("search", str(search_number))
+
+def replace_strings(string_list):
+    for i in range(len(string_list)):
+        string_list[i] = string_list[i].replace("Free Food", "Food")
+        string_list[i] = string_list[i].replace("ThoughtfulLearning", "Educational")
+        
+def format_event_time(time_string):
+    if '–' in time_string:
+        # Case: start time and end time are given
+        start_time, end_time = time_string.split('–')
+        try:
+            start_datetime = datetime.datetime.strptime(start_time.strip(), "%a, %b %d, %I:%M %p")
+            try:
+                end_datetime = datetime.datetime.strptime(end_time.strip(), "%I:%M %p")
+            except ValueError:
+                end_datetime = datetime.datetime.strptime(end_time.strip(), "%I %p")
+        except ValueError:
+            try:
+                start_datetime = datetime.datetime.strptime(start_time.strip(), "%a, %b %d, %I:%M")
+                try:
+                    end_datetime = datetime.datetime.strptime(end_time.strip(), "%I:%M %p")
+                except ValueError:
+                    end_datetime = datetime.datetime.strptime(end_time.strip(), "%I %p")
+            except ValueError:
+                try:
+                    start_datetime = datetime.datetime.strptime(start_time.strip(), "%a, %b %d, %I %p")
+                    try:
+                        end_datetime = datetime.datetime.strptime(end_time.strip(), "%I:%M %p")
+                    except ValueError:
+                        end_datetime = datetime.datetime.strptime(end_time.strip(), "%I %p")
+                except ValueError:
+                    start_datetime = datetime.datetime.strptime(start_time.strip(), "%a, %b %d, %I")
+                    try:
+                        end_datetime = datetime.datetime.strptime(end_time.strip(), "%I:%M %p")
+                    except ValueError:
+                        end_datetime = datetime.datetime.strptime(end_time.strip(), "%I %p")
+
+        formatted_start_time = start_datetime.strftime("%Y-%m-%d %H:%M:%S")
+        formatted_end_time = start_datetime.replace(hour=end_datetime.hour, minute=end_datetime.minute).strftime("%Y-%m-%d %H:%M:%S")
+        return formatted_start_time
+    else:
+        # Case: only start time is given
+        try:
+            start_datetime = datetime.datetime.strptime(time_string.strip(), "%a, %b %d, %I:%M %p")
+        except ValueError:
+            try:
+                start_datetime = datetime.datetime.strptime(time_string.strip(), "%a, %b %d, %I %p")
+            except ValueError:
+                start_datetime = datetime.datetime.strptime(time_string.strip(), "%a, %b %d, %I")
+        formatted_start_time = start_datetime.strftime("%Y-%m-%d %H:%M:%S")
+        return formatted_start_time
+
+def extract_event_tags(description, title):
+    tags = []
+    common_words = {
+        'Music': ['music', 'concert', 'performance', 'band', 'live', 'songs', 'song','acoustic'],
+        'Educational': ['education', 'workshop', 'seminar', 'lecture'],
+        'Cultural': ['culture', 'heritage', 'tradition', 'celebration', 'rituals'],
+        'Arts': ['art', 'painting', 'exhibition', 'gallery','theatre'],
+        'Food': ['food', 'cuisine', 'tasting', 'culinary','restaurant','eatery'],
+        'Sports': ['sports', 'game', 'tournament', 'competition', 'match']
+    }
+    
+    tags.append('Social')
+    for tag, words in common_words.items():
+        for word in words:
+            if word.lower() in description.lower() or word.lower() in title.lower():
+                tags.append(tag)
+                break
+
+    return tags
+
+def webscrape():
+    global last_run_date
+    global Global_event_id
+    base_url = "https://umassamherst.campuslabs.com/engage/event/search"
+    url = "https://umassamherst.campuslabs.com/engage/api/discovery/event/search"
     now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-4)))
     ends_after = now.strftime("%Y-%m-%dT%H:%M:%S%z")
-
+    all_events_json = []
+    
     querystring = {"endsAfter":ends_after,
                    "orderByField":"endsOn",
                    "orderByDirection":"ascending",
@@ -21,9 +120,10 @@ def web_scraper():
                    "take":"30","query":"","skip":"0"}
 
     headers = {
+        "cookie": "ARRAffinity=ad0748392c025af5aa98e52f557ef5c94ed9f8c53e0066f7370223f3edc6b13d; ARRAffinitySameSite=ad0748392c025af5aa98e52f557ef5c94ed9f8c53e0066f7370223f3edc6b13d",
         "Accept-Language": "en-US,en;q=0.9",
         "Connection": "keep-alive",
-        "Cookie": ".AspNetCore.Antiforgery.Pnjfq5WAl6o=CfDJ8Az9GcAD4TpIm2NmyW6ywWHDijs89NFLKvrrV77knufHuvo1_7xj6hO3vnSUC-ysjK1C-CI4L-8NfHx-2OVAsCfN5nwj199-MRBxyEbIUwR_4eisy_JSvkXiYHxCMHsH4DkG1IYpJ_SX3maPmELZiCA; ARRAffinity=1eba3c85693cc4165d210fbb33dd0e86bf38e81e92bef2a9921ec79851231039; ARRAffinitySameSite=1eba3c85693cc4165d210fbb33dd0e86bf38e81e92bef2a9921ec79851231039; ai_user=xSTxh7ilBGDe14MqPJB8Ed|2023-05-13T04:18:54.515Z; _gid=GA1.2.696029992.1684103287; _ga=GA1.1.2013760888.1683951536; _ga_6VXTC1Y945=GS1.1.1684103284.3.1.1684107656.0.0.0; _clck=94ya2u|2|fbm|0|1228; _ga_6FM4123XLW=GS1.1.1684152108.4.0.1684152108.0.0.0; ai_session=cVfJxzpfXE0ASJZU13k2q/|1684152007516|1684152109232; _clsk=1nkrbqr|1684152109235|2|1|www.clarity.ms/eus-c-sc/collect",
+        "Cookie": ".AspNetCore.Antiforgery.Pnjfq5WAl6o=CfDJ8Az9GcAD4TpIm2NmyW6ywWHDijs89NFLKvrrV77knufHuvo1_7xj6hO3vnSUC-ysjK1C-CI4L-8NfHx-2OVAsCfN5nwj199-MRBxyEbIUwR_4eisy_JSvkXiYHxCMHsH4DkG1IYpJ_SX3maPmELZiCA; ARRAffinity=1eba3c85693cc4165d210fbb33dd0e86bf38e81e92bef2a9921ec79851231039; ARRAffinitySameSite=1eba3c85693cc4165d210fbb33dd0e86bf38e81e92bef2a9921ec79851231039; ai_user=xSTxh7ilBGDe14MqPJB8Ed|2023-05-13T04:18:54.515Z; _gid=GA1.2.696029992.1684103287; _clck=94ya2u|2|fbm|0|1228; _clsk=xh59rc|1684194062877|2|1|www.clarity.ms/eus2-b-sc/collect; _ga=GA1.1.2013760888.1683951536; ai_session=z++F04YwesT/QQ2rQBQnFm|1684194050053|1684194877430; _ga_6VXTC1Y945=GS1.1.1684194060.6.1.1684194938.0.0.0; _ga_6FM4123XLW=GS1.1.1684194060.6.1.1684194938.0.0.0",
         "DNT": "1",
         "Referer": "https://umassamherst.campuslabs.com/engage/events",
         "Sec-Fetch-Dest": "empty",
@@ -33,18 +133,16 @@ def web_scraper():
         "accept": "application/json",
         "cache-control": "no-cache",
         "content-type": "application/json",
-        "request-id": "|b8e1e178b2f44e05bf3fa1e64898a371.199f2e035c37408e",
-        "sec-ch-ua": '"Google Chrome";v="113", "Chromium";v="113", "Not A;Brand";v="24"',
+        "request-id": "|583941bbc3fb4d9597a0b710cc5df1c5.e0e5a39b4b9f474c",
+        "sec-ch-ua": '"Google Chrome";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
         "sec-ch-ua-mobile": "?1",
         "sec-ch-ua-platform": "'Android'",
-        "traceparent": "00-b8e1e178b2f44e05bf3fa1e64898a371-199f2e035c37408e-01",
+        "traceparent": "00-583941bbc3fb4d9597a0b710cc5df1c5-e0e5a39b4b9f474c-01",
         "x-javascript-version": "undefined",
         "x-requested-with": "XMLHttpRequest",
-        "x-xsrf-token": "CfDJ8Az9GcAD4TpIm2NmyW6ywWEtuk4X9Mu_PYK2KOFOcOcN8C3BYOiPSfAzBEEPH0WrSW32t21quo20GYxaaUS1rgqmwO6USdLaK01cJPT0Ap1aQw2tcPcKtWcVUpolciMUqrwzTYoi0Hit1wGQl4CfRoY"
+        "x-xsrf-token": "CfDJ8Az9GcAD4TpIm2NmyW6ywWG4tUd7fVELsXf9dgjVhgfuk6_9UsKdpiFE2eho6mTXHdx-zFpD39oe7Xd0homVzQyYMVwLY3_asWcnA5_H0IgZBmDvXhmT4NBKqko1TwL1z4bAszQZs5QZVLw4KhT7skw"
     }
-
-    all_events_json = []
-
+    
     while True:
         response = requests.request("GET", url, headers=headers, params=querystring)
         jsonobj = response.json()
@@ -55,27 +153,328 @@ def web_scraper():
             break
         querystring["skip"] = str(len(all_events_json))
 
-    print("Total events:", len(all_events_json))
-    
+    #print("Total events:", len(all_events_json))
+    last_run_date = date.today()
     events_database = []
+    
+    #pushing the event to the database:
+    # Create a cursor object
+    cur = conn.cursor()
 
     for i in range (len(all_events_json)):
+        event_id = Global_event_id 
+        print("printing eventid")
+        print(event_id)
         event_name = all_events_json[i]['name']
-        event_description = all_events_json[i]['description']
+        print(event_name)
+        event_link = replace_search_word(base_url, all_events_json[i]['id'])
+        
+        html_string = all_events_json[i]['description']
+        soup = BeautifulSoup(html_string, 'html.parser')
+        event_description = soup.get_text()
+        
         event_location = all_events_json[i]['location']
-        event_start_time = all_events_json[i]['startsOn'] 
-        event_end_time = all_events_json[i]['endsOn']
+                
+        time_string = all_events_json[i]['startsOn']
+        parsed_time = parser.parse(time_string)
+        formatted_time = parsed_time.strftime("%Y-%m-%d %H:%M:%S")
+        event_start_time = formatted_time
+        
+        event_town = "Amherst"
+        if (is_outdoor_location(event_location, event_description)):
+            event_area = "outdoor"
+        else:
+            event_area = "indoor" 
+        
         event_tags = []
         event_tags.append(all_events_json[i]['theme'])       
         for j in (all_events_json[i]['categoryNames']): 
-            event_tags.append(j)
-        
+            event_tags.append(j)  
         for j in (all_events_json[i]['benefitNames']):
             event_tags.append(j)
+            
+        replace_strings(event_tags)
+        #print(event_tags)
+                
+        """
+        # column1: event_id
+        # column2: event_name
+        # column3: event_link
+        # column4: event_description
+        # column5: event_location
+        # column6: event_tags
+        # column7: event_time
+        # column8: event_town
+        # column9: event_area
+        """ 
+
+        events_database.append({'event_id': event_id, 'event_name': event_name, 'event_link': event_link, 'event_description': event_description, 'event_location': event_location, 'event_tags': event_tags, 'event_start_time': event_start_time, 'event_town': event_town, 'event_area': event_area})         
+      
+        # Define the SQL statement
+        sql = "INSERT INTO events(event_id, event_name, event_link, event_description, event_location, event_tags, event_time, event_town, event_area) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        # Define the data to be inserted
+        data = [
+            (event_id, event_name, event_link, event_description, event_location, event_tags, event_start_time, event_town, event_area)
+        ]
         
-        events_database.append({'event_name': event_name, 'event_description': event_description, 'event_location': event_location, 'event_start_time': event_start_time, 'event_end_time': event_end_time, 'event_tags': event_tags})
+        # Execute the SQL statement with multiple sets of parameters
+        cur.executemany(sql, data)
+        # Commit the transaction
+        conn.commit()   
+        Global_event_id += 1
+        print("printing Global_event_id")
+        print(Global_event_id)
         
-    last_run_date = date.today()
+    paramsNH = {
+      "engine": "google_events",
+      "q": "Events in Northampton",
+      "google_domain": "google.com",
+      "hl": "en",
+      "gl": "us",
+      "location": "Northampton, Massachusetts, United States",
+      "api_key": "c2fd7d0d035e44b7f6e34d8d444903406dcb42e9ae8fd88975719f365c618c83"
+    }
+
+    search = GoogleSearch(paramsNH)
+    results = search.get_dict()
+    
+    eventsNH = results['events_results']
+   
+    for i in range (len(eventsNH)):
+        """
+        # column1: event_id
+        # column2: event_name
+        # column3: event_link
+        # column4: event_description
+        # column5: event_location
+        # column6: event_tags
+        # column7: event_time
+        # column8: event_town
+        # column9: event_area
+        """ 
+        event_id = Global_event_id 
+        print("printing eventid")
+        print(event_id)
+        event_name = eventsNH[i]['title']
+        print(event_name)
+        event_link = eventsNH[i]['link']
+        event_description = eventsNH[i]['description']
+        event_location = ' '.join(eventsNH[i]['address'])
+    
+        event_tags = extract_event_tags(event_description, event_name)  #using event title, event description assign tags
+        #print(event_tags)
+    
+        event_start_time = format_event_time(eventsNH[i]['date']['when']) 
+        event_town = "Northampton"
+    
+        if (is_outdoor_location(event_location, event_description)):
+           event_area = "outdoor"
+        else:
+           event_area = "indoor"
+           
+        events_database.append({'event_id': event_id, 'event_name': event_name, 'event_link': event_link, 'event_description': event_description, 'event_location': event_location, 'event_tags': event_tags, 'event_start_time': event_start_time, 'event_town': event_town, 'event_area': event_area})         
+      
+        # Define the SQL statement
+        sql = "INSERT INTO events(event_id, event_name, event_link, event_description, event_location, event_tags, event_time, event_town, event_area) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        # Define the data to be inserted
+        data = [
+            (event_id, event_name, event_link, event_description, event_location, event_tags, event_start_time, event_town, event_area)
+        ]
+        
+        # Execute the SQL statement with multiple sets of parameters
+        cur.executemany(sql, data)
+        # Commit the transaction
+        conn.commit() 
+        Global_event_id += 1
+        print("printing Global_event_id")
+        print(Global_event_id)
+
+    paramsHadley = {
+       "engine": "google_events",
+       "q": "Events in Hadley",
+       "google_domain": "google.com",
+       "hl": "en",
+       "gl": "us",
+       "location": "Hadley, Massachusetts, United States",
+       "api_key": "c2fd7d0d035e44b7f6e34d8d444903406dcb42e9ae8fd88975719f365c618c83"
+    }
+
+    searchHadley = GoogleSearch(paramsHadley)
+    resultsHadley = searchHadley.get_dict()
+    eventsHadley = resultsHadley['events_results']
+   
+    for i in range (len(eventsHadley)):
+        """
+        # column1: event_id
+        # column2: event_name
+        # column3: event_link
+        # column4: event_description
+        # column5: event_location
+        # column6: event_tags
+        # column7: event_time
+        # column8: event_town
+        # column9: event_area
+        """ 
+        event_id = Global_event_id 
+        print("printing eventid")
+        print(event_id)
+        event_name = eventsHadley[i]['title']
+        print(event_name)
+        event_link = eventsHadley[i]['link']
+        event_description = eventsHadley[i]['description']
+        event_location = ' '.join(eventsHadley[i]['address'])
+    
+        event_tags = extract_event_tags(event_description, event_name)  #using event title, event description assign tags
+        #print(event_tags)
+    
+        event_start_time = format_event_time(eventsHadley[i]['date']['when']) 
+        event_town = "Hadley"
+    
+        if (is_outdoor_location(event_location, event_description)):
+           event_area = "outdoor"
+        else:
+           event_area = "indoor"
+           
+        events_database.append({'event_id': event_id, 'event_name': event_name, 'event_link': event_link, 'event_description': event_description, 'event_location': event_location, 'event_tags': event_tags, 'event_start_time': event_start_time, 'event_town': event_town, 'event_area': event_area})         
+      
+        # Define the SQL statement
+        sql = "INSERT INTO events(event_id, event_name, event_link, event_description, event_location, event_tags, event_time, event_town, event_area) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        # Define the data to be inserted
+        data = [
+            (event_id, event_name, event_link, event_description, event_location, event_tags, event_start_time, event_town, event_area)
+        ]
+        
+        # Execute the SQL statement with multiple sets of parameters
+        cur.executemany(sql, data)
+        # Commit the transaction
+        conn.commit() 
+        Global_event_id += 1
+        print("printing Global_event_id")
+        print(Global_event_id)
+        
+    paramsSunderland = {
+        "engine": "google_events",
+        "q": "Events in Sunderland",
+        "google_domain": "google.com",
+        "hl": "en",
+        "gl": "us",
+        "location": "Sunderland, Massachusetts, United States",
+        "api_key": "secret_api_key"
+    }
+    search = GoogleSearch(paramsSunderland)
+    results = search.get_dict()
+    eventsSunderland = results['events_results']
+   
+    for i in range (len(eventsSunderland)):
+        """
+        # column1: event_id
+        # column2: event_name
+        # column3: event_link
+        # column4: event_description
+        # column5: event_location
+        # column6: event_tags
+        # column7: event_time
+        # column8: event_town
+        # column9: event_area
+        """ 
+        event_id = Global_event_id 
+        print("printing eventid")
+        print(event_id)
+        event_name = eventsSunderland[i]['title']
+        print(event_name)
+        event_link = eventsSunderland[i]['link']
+        event_description = eventsSunderland[i]['description']
+        event_location = ' '.join(eventsSunderland[i]['address'])
+    
+        event_tags = extract_event_tags(event_description, event_name)  #using event title, event description assign tags
+        #print(event_tags)
+    
+        event_start_time = format_event_time(eventsSunderland[i]['date']['when']) 
+        event_town = "Sunderland"
+    
+        if (is_outdoor_location(event_location, event_description)):
+           event_area = "outdoor"
+        else:
+           event_area = "indoor"
+           
+        events_database.append({'event_id': event_id, 'event_name': event_name, 'event_link': event_link, 'event_description': event_description, 'event_location': event_location, 'event_tags': event_tags, 'event_start_time': event_start_time, 'event_town': event_town, 'event_area': event_area})         
+      
+        # Define the SQL statement
+        sql = "INSERT INTO events(event_id, event_name, event_link, event_description, event_location, event_tags, event_time, event_town, event_area) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        # Define the data to be inserted
+        data = [
+            (event_id, event_name, event_link, event_description, event_location, event_tags, event_start_time, event_town, event_area)
+        ]
+        
+        # Execute the SQL statement with multiple sets of parameters
+        cur.executemany(sql, data)
+        # Commit the transaction
+        conn.commit() 
+        Global_event_id += 1
+        
+    paramsAmherst = {
+        "engine": "google_events",
+        "q": "Events in Amherst",
+        "google_domain": "google.com",
+        "hl": "en",
+        "gl": "us",
+        "location": "Amherst, Massachusetts, United States",
+        "api_key": "secret_api_key"
+    }
+    search = GoogleSearch(paramsAmherst)
+    results = search.get_dict()
+    eventsAmherst = results['events_results']
+   
+    for i in range (len(eventsAmherst)):
+        """
+        # column1: event_id
+        # column2: event_name
+        # column3: event_link
+        # column4: event_description
+        # column5: event_location
+        # column6: event_tags
+        # column7: event_time
+        # column8: event_town
+        # column9: event_area
+        """ 
+        event_id = Global_event_id 
+        print("printing eventid")
+        print(event_id)
+        event_name = eventsAmherst[i]['title']
+        print(event_name)
+        event_link = eventsAmherst[i]['link']
+        event_description = eventsAmherst[i]['description']
+        event_location = ' '.join(eventsAmherst[i]['address'])
+    
+        event_tags = extract_event_tags(event_description, event_name)  #using event title, event description assign tags
+        #print(event_tags)
+    
+        event_start_time = format_event_time(eventsAmherst[i]['date']['when']) 
+        event_town = "Amherst"
+    
+        if (is_outdoor_location(event_location, event_description)):
+           event_area = "outdoor"
+        else:
+           event_area = "indoor"
+           
+        events_database.append({'event_id': event_id, 'event_name': event_name, 'event_link': event_link, 'event_description': event_description, 'event_location': event_location, 'event_tags': event_tags, 'event_start_time': event_start_time, 'event_town': event_town, 'event_area': event_area})         
+      
+        # Define the SQL statement
+        sql = "INSERT INTO events(event_id, event_name, event_link, event_description, event_location, event_tags, event_time, event_town, event_area) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        # Define the data to be inserted
+        data = [
+            (event_id, event_name, event_link, event_description, event_location, event_tags, event_start_time, event_town, event_area)
+        ]
+        
+        # Execute the SQL statement with multiple sets of parameters
+        cur.executemany(sql, data)
+        # Commit the transaction
+        conn.commit() 
+        Global_event_id += 1
+               
+    # Close the cursor and connection
+    cur.close()
+    conn.close()  
         
 def run_daily():
     global last_run_date
@@ -84,597 +483,21 @@ def run_daily():
         print("Scraper has already run today.")
     else:
         # Schedule the task to run once a day at 2:30 AM in the US/Eastern time zone
-        schedule.every().day.at("13:58", "US/Eastern").do(web_scraper)
+        schedule.every().day.at("10:22", "US/Eastern").do(webscrape)
         # Set the last run date to today
         last_run_date = date.today()
 
 run_daily()
 
+start_time = time.time()
+timeout_timer = 1000
+
 while True:
     # Check if there are any pending tasks to run
     schedule.run_pending()  
     # Wait for 1 second before checking again
-    time.sleep(1)
-    
-##########################################################################################################
-# all_events_json = [{'id': '8827211', 
-#                     'institutionId': 33, 
-#                     'organizationId': 101013, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Center for Counseling and Psychological Health', 
-#                     'organizationProfilePicture': None, 
-#                     'organizationNames': [], 
-#                     'name': 'Pet Therapy Drop-in Group', 
-#                     'description': '<h2>Mondays and Wednesdays in Middlesex House</h2>\r\n<p>Stop by CCPH for the opportunity to spend time with a therapy dog alongside a small group of people! Visits with Rosie and George happen on a first-come basis. Interested participants can walk into the Middlesex building, check in with the front desk, and sign up for a 15-minute session.</p>\r\n<p><em>Hosted by Beth Prullage, LICSW with Rosie and Cindy Moschella, LMHC with George</em></p>\r\n<p>Mondays with Rosie:&nbsp;</p>\r\n<ul>\r\n<li>2:15 p.m.</li>\r\n<li>2:35 p.m.</li>\r\n<li>3:00 p.m.</li>\r\n<li>3:20 p.m.</li>\r\n</ul>\r\n<p>Wednesdays with George:</p>\r\n<ul>\r\n<li>11:10 a.m.</li>\r\n<li>11:30 a.m.</li>\r\n<li>1:15 p.m.</li>\r\n<li>1:35 p.m.</li>\r\n</ul>', 
-#                     'location': 'Center for Counseling & Psychological Health', 
-#                     'startsOn': '2023-05-15T18:15:00+00:00', 
-#                     'endsOn': '2023-05-15T19:20:00+00:00', 
-#                     'imagePath': '2b2b0cba-ee0f-4b55-bcd3-18edc052cabfe0bcb32f-7cca-4a85-b7f3-84b945f6e2cd.png', 
-#                     'theme': 'Social', 
-#                     'categoryIds': ['1163'], 
-#                     'categoryNames': ['Health and Wellness'], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 99.9906}, 
-                   
-#                    {'id': '8824954', 
-#                     'institutionId': 33, 
-#                     'organizationId': 101013, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Center for Counseling and Psychological Health', 
-#                     'organizationProfilePicture': None, 
-#                     'organizationNames': [], 
-#                     'name': 'Stress-less: Breathe, Shake, & Move', 
-#                     'description': '<h2>Mondays, 4:00 - 5:00 p.m. via Zoom and Middlesex House&nbsp;</h2>\r\n<h2>Runs weekly during the semester starting Feb. 13th (canceled on 2/6)</h2>\r\n<p>Join our drop-in group to learn mindful movements to help you increase your inner calm, present moment awareness, mental clarity, and focused attention. Using yoga and qi gong we will combat the effects of stress including fatigue, difficulty concentrating, decreased energy, irritability, and tension by practicing:</p>\r\n<ul>\r\n<li>&nbsp;breathing exercises</li>\r\n<li>&nbsp;grounding techniques</li>\r\n<li>&nbsp;flowing, gentle movements</li>\r\n<li>&nbsp;shaking like a tree</li>\r\n<li>&nbsp;tapping and self-message</li>\r\n</ul>\r\n<p>No prior experience or yoga mat necessary.</p>\r\n<p>Students can join any one or multiple sessions. To join in person, check in with the front desk in Middlesex House prior to the 4:00 p.m. start time. To join remotely, sign up for the Zoom link&nbsp;<a href="https://umass-amherst.zoom.us/meeting/register/tJMpf-ivqjwoHtL3MLoGYdwwi88HuG7vQXYZ">below.</a></p>\r\n<p><em>Hosted by Yolanda Ramos</em></p>', 
-#                     'location': 'Center for Counseling & Psychological Health AND ZOOM', 
-#                     'startsOn': '2023-05-15T20:00:00+00:00', 
-#                     'endsOn': '2023-05-15T21:00:00+00:00', 
-#                     'imagePath': '96f62729-0479-489f-97e8-0dd2801238ca81091a6b-e3c9-42e0-aca3-993789366c8a.png', 
-#                     'theme': 'Social', 
-#                     'categoryIds': [], 
-#                     'categoryNames': [], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 99.98287}, 
-                   
-#                    {'id': '8816865', 
-#                     'institutionId': 33, 
-#                     'organizationId': 101013, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Center for Counseling and Psychological Health', 
-#                     'organizationProfilePicture': None, 
-#                     'organizationNames': [], 
-#                     'name': 'Stress-less: Breathe, Shake, & Move', 
-#                     'description': '<p>Join our drop-in group to learn mindful movements to help you increase your inner calm, present moment awareness, mental clarity, and focused attention. Using yoga and qi gong we will combat the effects of stress including fatigue, difficulty concentrating, decreased energy, irritability, and tension by practicing:</p>\r\n<ul>\r\n<li>&nbsp;breathing exercises</li>\r\n<li>&nbsp;grounding techniques</li>\r\n<li>&nbsp;flowing, gentle movements</li>\r\n<li>&nbsp;shaking like a tree</li>\r\n<li>&nbsp;tapping and self-message</li>\r\n</ul>\r\n<p>No prior experience or yoga mat necessary.</p>\r\n<p>Students can join any one or multiple sessions. <strong>To join in person, check in with the front desk in Middlesex House prior to the 4:00 p.m. start time. To join remotely, sign up for the Zoom link&nbsp;<a href="https://umass-amherst.zoom.us/meeting/register/tJMpf-ivqjwoHtL3MLoGYdwwi88HuG7vQXYZ">here.</a></strong></p>', 
-#                     'location': '101 Middlesex House (Also by Zoom)', 
-#                     'startsOn': '2023-02-13T21:00:00+00:00', 
-#                     'endsOn': '2023-05-15T21:00:00+00:00', 
-#                     'imagePath': '355d389d-feb2-43a8-b2b5-0fcecebd2a330759993b-acc5-472a-ae51-11b9ab96c117.png', 
-#                     'theme': 'Social', 
-#                     'categoryIds': [], 
-#                     'categoryNames': [], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': '42.385670', 
-#                     'longitude': '-72.528470', 
-#                     'recScore': None, 
-#                     '@search.score': 1.0}, 
-                   
-#                    {'id': '9001191', 
-#                     'institutionId': 33, 
-#                     'organizationId': 18397, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Navigators', 
-#                     'organizationProfilePicture': '5cb844ad-58bc-4ce3-8854-b61ed4972ece6567cae2-456f-42f6-937c-bcad040b88c1.png', 'organizationNames': [], 
-#                     'name': 'NavNite', 
-#                     'description': '<p><span style="font-weight: 400;">Come join us for Bible Study! We love to get to know one another and fellowship together at the beginning and then we dive in! This semester\'s NavNites are themed "Finding God in Emotion"&nbsp; This is where we\'ll discuss and explore what emotions we as college students tend to go through and what God\'s Word says about them in the Bible. We meet on Monday\'s 7:30 pm in First Baptist Church (Rear entrance lower level/parking lot side)</span></p>', 
-#                     'location': 'First Baptist Church', 
-#                     'startsOn': '2023-05-15T23:30:00+00:00', 
-#                     'endsOn': '2023-05-16T01:30:00+00:00', 
-#                     'imagePath': '73d5ab9d-ba8d-4307-8b2b-8ad6e4502046ed907c82-df77-47e0-9845-79bc0b202969.png', 
-#                     'theme': 'Spirituality', 
-#                     'categoryIds': ['419'], 
-#                     'categoryNames': ['Meeting'], 
-#                     'benefitNames': ['Free Food'], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 99.9674},
-                    
-#                    {'id': '9089452', 
-#                     'institutionId': 33, 
-#                     'organizationId': 18396, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'African Student Association', 
-#                     'organizationProfilePicture': '6f8cc78d-7f9d-468c-aff3-26043883a199f679c891-3798-450c-af0f-58582a56505e.jpg', 'organizationNames': [], 
-#                     'name': 'ASA Senior Sendoff', 
-#                     'description': '<p>ASA will be holding a senior sendoff to appreciate all the seniors on eboard&nbsp;</p>', 
-#                     'location': 'Cape Cod Lounge', 
-#                     'startsOn': '2023-05-16T22:00:00+00:00', 
-#                     'endsOn': '2023-05-17T01:00:00+00:00', 
-#                     'imagePath': None, 
-#                     'theme': 'Cultural', 
-#                     'categoryIds': [], 
-#                     'categoryNames': [], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 99.86782}, 
-                   
-#                    {'id': '8676976', 
-#                     'institutionId': 33, 
-#                     'organizationId': 18553, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'University Programming Council', 
-#                     'organizationProfilePicture': '1f5c23ad-7a10-4213-ba9f-056118fa432660ec019b-a42d-4b12-abc3-57106d1a2310.png', 'organizationNames': [], 
-#                     'name': 'UPC General Body Meeting Spring 2023', 
-#                     'description': '<p>UPC General Body Meeting in Student Union Cape Cod Lounge Spring 2023</p>', 
-#                     'location': 'Student Union Cape Cod Lounge', 
-#                     'startsOn': '2023-05-16T23:00:00+00:00', 
-#                     'endsOn': '2023-05-17T01:00:00+00:00', 
-#                     'imagePath': None, 
-#                     'theme': 'Social', 
-#                     'categoryIds': ['419'], 
-#                     'categoryNames': ['Meeting'], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 99.86339}, 
-                   
-#                    {'id': '8827199', 
-#                     'institutionId': 33, 
-#                     'organizationId': 101013, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Center for Counseling and Psychological Health', 
-#                     'organizationProfilePicture': None, 
-#                     'organizationNames': [], 
-#                     'name': 'Pet Therapy Drop-in Group', 
-#                     'description': '<h2>Mondays and Wednesdays in Middlesex House</h2>\r\n<p>Stop by CCPH for the opportunity to spend time with a therapy dog alongside a small group of people! Visits with Rosie and George happen on a first-come basis. Interested participants can walk into the Middlesex building, check in with the front desk, and sign up for a 15-minute session.</p>\r\n<p><em>Hosted by Beth Prullage, LICSW with Rosie and Cindy Moschella, LMHC with George</em></p>\r\n<p>Mondays with Rosie:&nbsp;</p>\r\n<ul>\r\n<li>2:15 p.m.</li>\r\n<li>2:35 p.m.</li>\r\n<li>3:00 p.m.</li>\r\n<li>3:20 p.m.</li>\r\n</ul>\r\n<p>Wednesdays with George:</p>\r\n<ul>\r\n<li>11:10 a.m.</li>\r\n<li>11:30 a.m.</li>\r\n<li>1:15 p.m.</li>\r\n<li>1:35 p.m.</li>\r\n</ul>', 
-#                     'location': 'Center for Counseling & Psychological Health', 
-#                     'startsOn': '2023-05-17T15:10:00+00:00', 
-#                     'endsOn': '2023-05-17T17:35:00+00:00', 
-#                     'imagePath': '24795f29-47c7-4274-a32c-d16c429e14f4376ac8a9-4049-458c-b767-0d4e708315bd.png', 
-#                     'theme': 'Social', 
-#                     'categoryIds': ['1163'], 
-#                     'categoryNames': ['Health and Wellness'], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 99.79169}, 
-                   
-#                    {'id': '8816734', 
-#                     'institutionId': 33, 
-#                     'organizationId': 101013, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Center for Counseling and Psychological Health', 
-#                     'organizationProfilePicture': None, 
-#                     'organizationNames': [], 
-#                     'name': 'Trans and Gender-Nonconforming Community Support', 
-#                     'description': '<h2>Wednesdays, 4:30 &ndash; 5:30 p.m. via Zoom (exceptions below)</h2>\r\n<h3>Group runs:</h3>\r\n<h3>In person at Middlesex House the 1st Wednesday of the month</h3>\r\n<h3>Over Zoom all other Wednesdays of the month</h3>\r\n<p>Free and open to all UMass and Five College students who identify as trans, non-binary, gender non-conforming, or questioning. Students located in any state, or internationally are welcome.</p>\r\n<p><em>Co-sponsored by:&nbsp;<a href="https://www.umass.edu/stonewall/" target="_blank" rel="noopener">Stonewall Center</a></em></p>\r\n<p><strong>Call CCPH at (413) 545-2337 and ask for Brad or Beth if interested in joining.</strong></p>', 
-#                     'location': 'Online', 
-#                     'startsOn': '2023-05-17T20:30:00+00:00', 
-#                     'endsOn': '2023-05-17T21:30:00+00:00', 
-#                     'imagePath': '2f10c0ea-3fc0-4973-ba4b-176c6df921ac7ad54a55-7481-41b2-acd0-60577b93b15c.png', 
-#                     'theme': 'Social', 
-#                     'categoryIds': ['1163'], 
-#                     'categoryNames': ['Health and Wellness'], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 99.768005}, 
-                   
-#                    {'id': '8816851', 
-#                     'institutionId': 33, 
-#                     'organizationId': 101013, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Center for Counseling and Psychological Health', 
-#                     'organizationProfilePicture': None, 
-#                     'organizationNames': [], 
-#                     'name': 'College Living on the Spectrum*', 
-#                     'description': '<h2><strong>Wednesdays, 4:30 &ndash; 6 p.m.</strong></h2>\r\n<h2>Starts Feb 8th - Middlesex House</h2>\r\n<p>A weekly drop-in space of peers talking about their experiences, supported by co-facilitators.&nbsp;</p>\r\n<p>*Spectrum refers to people who experience any elements of autism spectrum disorders, including (dis)abilities related to perception, sensory processing, language, executive function, and motor skills. Group members do not need a medical diagnosis to attend the group. The group will work with the philosophy of &lsquo;support needs&rsquo; rather than ability.&nbsp;</p>\r\n<p>You are welcome to honor your needs and come after the start time and/or leave early. Please refrain from using products with fragrances.</p>\r\n<p><em>Hosted by&nbsp;<a href="https://www.umass.edu/counseling/aspen-alterkun-licsw" target="_blank" rel="noopener">Aspen Alterkun, LICSW</a></em></p>\r\n<h4><em>To join, drop in any week to Middlesex House prior to 4:30 and check in with the front desk.&nbsp;</em></h4>', 
-#                     'location': 'Center for Counseling & Psychological Health', 
-#                     'startsOn': '2023-05-17T20:30:00+00:00', 
-#                     'endsOn': '2023-05-17T22:00:00+00:00', 
-#                     'imagePath': 'a118f82f-54b7-4d41-b273-10bc3a9317c4f1790808-b8e9-45f7-bcac-d7c8d0f745ac.png', 
-#                     'theme': 'Social', 
-#                     'categoryIds': ['1163'], 
-#                     'categoryNames': ['Health and Wellness'], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 99.768005}, 
-                   
-#                    {'id': '9090375', 
-#                     'institutionId': 33, 
-#                     'organizationId': 334573, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Campus Life and Wellbeing', 
-#                     'organizationProfilePicture': '2e2692a8-ddab-4dca-afa5-1ed57b2bb1cfc5cfce95-933b-43a6-9e93-f11e5be1f377.jpg', 'organizationNames': [], 
-#                     'name': 'Diffractions: a Gallery Exhibition', 
-#                     'description': '<p><span style="font-weight: 400;">UMass Photovoice Exhibit on Wellbeing</span></p>\r\n<p>&nbsp;</p>\r\n<p><span style="font-weight: 400;">The Okanagan Wellbeing Collective is pleased to announce the upcoming gallery exhibit, </span><em><span style="font-weight: 400;">Diffractions: A Photovoice Project of Student and Staff Experiences of Health and Wellbeing </span></em><span style="font-weight: 400;">on May 17, 2023 from 4:30 p.m. - 7:30 p.m. at the Bromery Atrium in the Fine Arts Center at UMass. There will be snacks and drinks, music, art, stories, and the beautiful light of golden hour reflected off the pond.&nbsp; Everyone is welcome!</span></p>\r\n<p>&nbsp;</p>\r\n<p><span style="font-weight: 400;">The </span><em><span style="font-weight: 400;">Diffractions</span></em><span style="font-weight: 400;"> exhibit highlights the creativity and diversity of our community\'s perspectives and experiences related to health and wellbeing. We believe that this is an exceptional opportunity for us to learn more about how we can promote wellbeing in our daily lives, as well as to appreciate the talents of our fellow colleagues and students.&nbsp; In addition to seeing photos and reading the stories around them, there will be opportunities to offer your own reflections or stories by writing them on cards placed around the exhibit or uploading them to our google site. We would love to hear from you.</span></p>\r\n<p><span style="font-weight: 400;">We would be delighted to have you join us for this event. We are confident that you will find the </span><em><span style="font-weight: 400;">Diffractions</span></em><span style="font-weight: 400;"> exhibit to be a meaningful and thought-provoking experience.&nbsp;&nbsp;</span></p>\r\n<p>&nbsp;</p>\r\n<p><span style="font-weight: 400;">May 17, 2023</span></p>\r\n<p><span style="font-weight: 400;">4:30 p.m. - 7:30pm</span></p>\r\n<p><span style="font-weight: 400;">Bromery Atrium, Fine Arts Center, UMass</span></p>\r\n<p>&nbsp;</p>\r\n<p><span style="font-weight: 400;">Please contact us for additional information or to book an interview time with the spokesperson available.&nbsp;</span></p>', 
-#                     'location': 'Bromery Arts Center', 
-#                     'startsOn': '2023-05-17T20:30:00+00:00', 
-#                     'endsOn': '2023-05-17T23:30:00+00:00', 
-#                     'imagePath': 'fb874924-a4e2-4f08-85ea-08aa4805f5a5f0d4f554-322c-41aa-826f-b4e5b8e288c4.png', 
-#                     'theme': 'Arts', 
-#                     'categoryIds': ['415', '1163'], 
-#                     'categoryNames': ['Display/exhibit', 'Health and Wellness'], 
-#                     'benefitNames': ['Free Food'], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': '42.388230', 
-#                     'longitude': '-72.525770', 
-#                     'recScore': None, 
-#                     '@search.score': 99.768005}, 
-                   
-#                    {'id': '8827188', 
-#                     'institutionId': 33, 
-#                     'organizationId': 101013, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Center for Counseling and Psychological Health', 
-#                     'organizationProfilePicture': None, 
-#                     'organizationNames': [], 
-#                     'name': 'LGBTQ+ Talk Space', 
-#                     'description': '<h2><strong>Wednesdays, 6:30 &ndash; 8 p.m.</strong><br /><strong>Starts Feb. 8th</strong></h2>\r\n<h2>Wilder Hall&nbsp;102 (CMASS)</h2>\r\n<p>Are you lesbian, gay, bisexual, trans, queer, intersex, asexual and/or questioning? Do you want a space to socialize, make friends and talk about topics like school, mental health, and being queer/trans? Come to the LGBTQ+ Talk Space, a weekly drop-in group, to talk about your experiences and build community. Co-sponsored by the&nbsp;<a href="https://www.umass.edu/stonewall/" target="_blank" rel="noopener">Stonewall Center</a>&nbsp;and open to all Five College students. Feel free to come late and/or leave early.</p>\r\n<p><em>For more information, contact&nbsp;<a href="https://www.umass.edu/counseling/aspen-alterkun-licsw" target="_blank" rel="noopener">Aspen Alterkun</a>, 413-545-2337</em></p>\r\n<p>To join LGBTQ+ Talk Space, join us at Wilder Hall any week. This is a drop in group so students can come once, or repeatedly.&nbsp;</p>\r\n<p>&nbsp;All groups are <a href="https://nam10.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwww.umass.edu%2Fregistrar%2Fcalendars%2Facademic-calendar%23Spring%25202023&amp;data=05%7C01%7Cchristinef%40umass.edu%7Cfb55bedb8ab9493d401008dafd532ae3%7C7bd08b0b33954dc194bbd0b2e56a497f%7C0%7C0%7C638100830879747212%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C3000%7C%7C%7C&amp;sdata=Plv24Z3pzg1V%2Bpm2hHNpXK6qtzsZ4pTrENAr0C30PXU%3D&amp;reserved=0">canceled on campus closure days and spring break </a>.</p>', 
-#                     'location': 'CMASS', 
-#                     'startsOn': '2023-05-17T22:30:00+00:00', 
-#                     'endsOn': '2023-05-18T00:00:00+00:00', 
-#                     'imagePath': 'f91cc9cf-2cf9-4603-a3e4-afafa014cfa8fd493966-666b-4fd8-b90a-f44d2376f18f.png', 
-#                     'theme': 'Social', 
-#                     'categoryIds': [], 
-#                     'categoryNames': [], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': '41.293770', 
-#                     'longitude': '-82.222240', 
-#                     'recScore': None, 
-#                     '@search.score': 99.759125}, 
-                   
-#                    {'id': '8614993', 
-#                     'institutionId': 33, 
-#                     'organizationId': 18582, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Student Government Association', 
-#                     'organizationProfilePicture': '89e93b0e-616c-4222-8db2-ccd5e24f685f3bcfd5e9-93e1-4c2a-b8a0-952835224fd8.png', 'organizationNames': [], 
-#                     'name': 'SGA Senate Meeting', 
-#                     'description': '<p>The Student Government Association will host weekly senate meetings on Wednesday nights to conduct the official business of the SGA during both the Fall and Spring semesters.&nbsp;</p>', 
-#                     'location': 'Cape Cod Lounge', 
-#                     'startsOn': '2023-05-17T22:30:00+00:00', 
-#                     'endsOn': '2023-05-18T03:45:00+00:00', 
-#                     'imagePath': None, 
-#                     'theme': 'CommunityService', 
-#                     'categoryIds': ['419'], 
-#                     'categoryNames': ['Meeting'], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 99.759125},
-                    
-#                    {'id': '9057500', 
-#                     'institutionId': 33, 
-#                     'organizationId': 18589, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Student Bridges', 
-#                     'organizationProfilePicture': 'f12a3a98-845c-437c-bd71-a1ddc376dd2064d98b93-dc16-4c0e-947f-7d606b038ac7.jpg', 'organizationNames': [], 
-#                     'name': 'Student Bridges Campus & Community Recognition Brunch', 
-#                     'description': '<p>This event will be an opportunity to recognize graduating seniors and campus and community partners in company of UMass students, staff, and faculty. Students will engage in conversations about their experience being part of Student Bridges which will serve as a recruitment tool for prospective UMass students to get involved with the Agency. Campus and Community partners will discuss the resources they offer to promote UMass student success.&nbsp;</p>', 
-#                     'location': 'Student Union Building - Black Box Theatre ', 
-#                     'startsOn': '2023-05-18T15:00:00+00:00', 
-#                     'endsOn': '2023-05-18T17:00:00+00:00', 
-#                     'imagePath': '66349e12-8394-4222-a74f-d417ddfa293ce724e97a-9899-4c64-923f-612c8940f23b.png', 
-#                     'theme': 'Social', 
-#                     'categoryIds': ['407'], 
-#                     'categoryNames': ['Banquet'], 
-#                     'benefitNames': ['Free Food'], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': '42.390840', 
-#                     'longitude': '-72.527650', 
-#                     'recScore': None, 
-#                     '@search.score': 99.68577}, 
-                   
-#                    {'id': '9042952', 
-#                     'institutionId': 33, 
-#                     'organizationId': 18587, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Stonewall Center', 
-#                     'organizationProfilePicture': 'c152a1b5-8076-4b88-bc8e-bf85969cad9dae4a92a4-dd69-4c74-928e-ac9c0f111638.jpg', 'organizationNames': [], 
-#                     'name': '25th Annual Rainbow Graduation', 
-#                     'description': '<p>Keynote speaker: Shaplaie Brooks, Executive Director of the Massachusetts Commission on LGBTQ Youth. Opening remarks by Chancellor Subbaswamy. Open to all. Dinner will be provided. <strong>Graduating students&nbsp;</strong><strong>should register&nbsp;</strong><strong><a href="https://tinyurl.com/RainbowGrad23">here</a></strong>&nbsp;(https://tinyurl.com/RainbowGrad23)&nbsp;<strong>by April 28th</strong>&nbsp;to be recognized&nbsp;(graduates will receive a certificate, a rainbow tassel, and a personalized journal).&nbsp;</p>', 
-#                     'location': 'Bromery Center for the Arts Plaza', 
-#                     'startsOn': '2023-05-18T22:00:00+00:00', 
-#                     'endsOn': '2023-05-19T00:00:00+00:00', 
-#                     'imagePath': 'c259d505-4ca3-40b8-bbd0-fb32e4e8ec7712ab5dea-14d9-46d6-b9c6-469a24682a64.png', 
-#                     'theme': 'Cultural', 
-#                     'categoryIds': [], 
-#                     'categoryNames': [], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 99.65461}, 
-                   
-#                    {'id': '9053497', 
-#                     'institutionId': 33, 
-#                     'organizationId': 18308, 
-#                     'organizationIds': ['18308', '18309'], 
-#                     'branchId': 18308, 
-#                     'branchIds': ['18308'], 
-#                     'organizationName': 'Student Affairs and Campus Life', 
-#                     'organizationProfilePicture': 'f4e9ed91-309e-44c3-b2ac-f3afd7ac8bf97dd98652-65ea-4ba2-8462-333655ea8e97.jpg', 'organizationNames': ['Student Affairs and Campus Life', 'Student Engagement and Leadership'], 
-#                     'name': 'The Sammies: 18th annual student life awards', 
-#                     'description': '<p>The Sammies: 18th annual student life awards is back! New awards, new format, same mission: celebrate and award our most inspiring, influential, and incredible students involved with RSOs, Agencies, and Sorority Fraternity Life!</p>', 
-#                     'location': 'Student Union Ballroom', 
-#                     'startsOn': '2023-05-18T22:00:00+00:00', 
-#                     'endsOn': '2023-05-19T00:30:00+00:00', 
-#                     'imagePath': '1dc3e82e-2b6c-43d8-9ded-b503816efa103ca56489-0595-4db0-9a7b-20b5298a45ba.png', 
-#                     'theme': 'Social', 
-#                     'categoryIds': ['406'], 
-#                     'categoryNames': ['Awards'], 
-#                     'benefitNames': ['Free Food'], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': '42.390840', 
-#                     'longitude': '-72.527650', 
-#                     'recScore': None, 
-#                     '@search.score': 99.65461}, 
-                   
-#                    {'id': '8710481', 
-#                     'institutionId': 33, 
-#                     'organizationId': 18535, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Alpha Epsilon Phi', 
-#                     'organizationProfilePicture': '27793041-315f-421a-af78-e184af9c5aa38e98def3-2b5f-437e-8a7a-7f9d0db1ea36.jpg', 'organizationNames': [], 
-#                     'name': 'AEPhi Chapter Meeting', 
-#                     'description': '<p>weekly chapter meeting for the sorority&nbsp;</p>', 
-#                     'location': 'Campus Center 174-76', 
-#                     'startsOn': '2023-05-21T22:00:00+00:00', 
-#                     'endsOn': '2023-05-22T01:00:00+00:00', 
-#                     'imagePath': None, 
-#                     'theme': 'Social', 
-#                     'categoryIds': [], 
-#                     'categoryNames': [], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': '42.391720', 
-#                     'longitude': '-72.527020', 
-#                     'recScore': None, 
-#                     '@search.score': 99.332794}, 
-                   
-#                    {'id': '8871560', 
-#                     'institutionId': 33, 
-#                     'organizationId': 107997, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Entrepreneurship Club ', 
-#                     'organizationProfilePicture': 'ad4ea97e-dd28-4452-80ac-a9eb962b814d41cfd720-5f21-4cda-8a09-a4aa683851fd.png', 'organizationNames': [], 
-#                     'name': 'ULaunch Day #1 | Student Union Cape Cod Lounge | Fall 2023', 
-#                     'description': '<h2>ULaunch is a pitch competition where participants come in with new business ideas, and compete for $1000 first place funding. Own Your Life.</h2>\r\n<div class="details">\r\n<div class="wrapper">\r\n<p>We are so happy to invite you to join us for this event. This competition is a great opportunity for perspective entrepreneurs and others with inventive spirits to lay the groundwork for their first startup! In just one weekend, you will be able to form a team, compete for $1,000 in first place funding, $500 in second place, and $250 third in place, and meet some ambitious individuals just like you.</p>\r\n<p>In addition, we will have speakers, workshops, mentors, and judges to assist you along the process. There is absolutely no experience necessary, just a craving to Own Your Life.</p>\r\n<p>ULaunch is a competition held by the UMass Entrepreneurship Club and its partner the UMass Berthiaume Center for Entrepreneurship.</p>\r\n<p>&nbsp;</p>\r\n<p><strong>ELIGIBILITY TO ATTEND:</strong></p>\r\n<p>This event is for any current UMass Amherst students.</p>\r\n<p>Businesses have to be at the ideation stage. Just an idea on a napkin! No extensive development yet.</p>\r\n<p>Open to adding new team members during the event.</p>\r\n<p>&nbsp;</p>\r\n<p><strong>HOW THE EVENT WORKS:</strong></p>\r\n<p><strong>DAY 1 (Student Union Cape Cod Lounge On 2nd Floor):</strong></p>\r\n<p>1. Introductions</p>\r\n<p>2. Guest speaker</p>\r\n<p>3. Give a 1-minute summary of your business idea</p>\r\n<p>4. The group votes on the top 5-7 business ideas to work on. We narrow down the business ideas so teams of 2-4 can be formed.</p>\r\n<p>5. Students who do not have a business idea join a team. Each team has to be open to accepting team members for the competition during the event.</p>\r\n<p>6. Break for lunch at a dining hall (lunch is not included)</p>\r\n<p>7. Example pitch presentation + Mentoring</p>\r\n<p>8. Pitch deck presentation working time</p>\r\n<p>&nbsp;</p>\r\n<p><strong>DAY 2 (Student Union Black Box In Lower Level):</strong></p>\r\n<p>1. A bit more time to do group work</p>\r\n<p>2. More mentoring</p>\r\n<p>3. Introduction of judges</p>\r\n<p>4. Pitching</p>\r\n<p>5. Winners get selected</p>\r\n<p>6. Included food + refreshments to end the event</p>\r\n</div>\r\n</div>', 
-#                     'location': 'Student Union Cape Cod Lounge', 
-#                     'startsOn': '2023-10-21T14:45:00+00:00', 
-#                     'endsOn': '2023-10-22T00:00:00+00:00', 
-#                     'imagePath': 'ca476251-dad9-4f1c-a7de-b3e646f2fe074c38c7a9-dedd-4d68-8ada-0cedb075f3dd.png', 
-#                     'theme': 'ThoughtfulLearning', 
-#                     'categoryIds': ['430'], 
-#                     'categoryNames': ['Training/workshop'], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': '42.390840', 
-#                     'longitude': '-72.527650', 
-#                     'recScore': None, 
-#                     '@search.score': 78.61256}, 
-                   
-#                    {'id': '8871561', 
-#                     'institutionId': 33, 
-#                     'organizationId': 107997, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'Entrepreneurship Club ', 
-#                     'organizationProfilePicture': 'ad4ea97e-dd28-4452-80ac-a9eb962b814d41cfd720-5f21-4cda-8a09-a4aa683851fd.png', 'organizationNames': [], 
-#                     'name': 'ULaunch Day #2 | Student Union Black Box | Fall 2023', 
-#                     'description': '<h2><strong>ULaunch is a pitch competition where participants come in with new business ideas, and compete for $1000 first place funding. Own Your Life.</strong></h2>\r\n<p><span style="font-weight: 400;">We are so happy to invite you to join us for this event. This competition is a great opportunity for perspective entrepreneurs and others with inventive spirits to lay the groundwork for their first startup! In just one weekend, you will be able to form a team, compete for $1,000 in first place funding, $500 in second place, and $250 in third place, and meet some ambitious individuals just like you.</span></p>\r\n<p><span style="font-weight: 400;">In addition, we will have speakers, workshops, mentors, and judges to assist you along the process. There is absolutely no experience necessary, just a craving to Own Your Life.</span></p>\r\n<p><span style="font-weight: 400;">ULaunch is a competition held by the UMass Entrepreneurship Club and its partner the UMass Berthiaume Center for Entrepreneurship.</span></p>\r\n<p><span style="font-weight: 400;">&nbsp;</span></p>\r\n<p><strong>ELIGIBILITY TO ATTEND:</strong></p>\r\n<p><span style="font-weight: 400;">This event is for any current UMass Amherst students.</span></p>\r\n<p><span style="font-weight: 400;">Businesses have to be at the ideation stage. Just an idea on a napkin! No extensive development yet.</span></p>\r\n<p><span style="font-weight: 400;">Open to adding new team members during the event.</span></p>\r\n<p><span style="font-weight: 400;">&nbsp;</span></p>\r\n<p><strong>HOW THE EVENT WORKS:</strong></p>\r\n<p><strong>DAY 1 (Student Union Cape Cod Lounge On 2nd Floor):</strong></p>\r\n<ol>\r\n<li><span style="font-weight: 400;"> Introductions</span></li>\r\n<li><span style="font-weight: 400;"> Guest speaker</span></li>\r\n<li><span style="font-weight: 400;"> Give a 1-minute summary of your business idea</span></li>\r\n<li><span style="font-weight: 400;"> The group votes on the top 5-7 business ideas to work on. We narrow down the business ideas so teams of 2-4 can be formed.</span></li>\r\n<li><span style="font-weight: 400;"> Students who do not have a business idea join a team. Each team has to be open to accepting team members for the competition during the event.</span></li>\r\n<li><span style="font-weight: 400;"> Break for lunch at a dining hall (lunch is not included)</span></li>\r\n<li><span style="font-weight: 400;"> Example pitch presentation + Mentoring</span></li>\r\n<li><span style="font-weight: 400;"> Pitch deck presentation working time</span></li>\r\n</ol>\r\n<p><span style="font-weight: 400;">&nbsp;</span></p>\r\n<p><strong>DAY 2 (Student Union Black Box In Lower Level):</strong></p>\r\n<ol>\r\n<li><span style="font-weight: 400;"> A bit more time to do group work</span></li>\r\n<li><span style="font-weight: 400;"> More mentoring</span></li>\r\n<li><span style="font-weight: 400;"> Introduction of judges</span></li>\r\n<li><span style="font-weight: 400;"> Pitching</span></li>\r\n<li><span style="font-weight: 400;"> Winners get selected</span></li>\r\n<li><span style="font-weight: 400;"> Included food + refreshments to end the event</span></li>\r\n</ol>', 'location': 'Student Union Black Box', 
-#                     'startsOn': '2023-10-22T14:45:00+00:00', 
-#                     'endsOn': '2023-10-22T19:00:00+00:00', 
-#                     'imagePath': '4cb02cd9-e018-4a5e-b3b5-7478b4f9b73679700fb1-0fe6-48a1-a95e-004702f92c21.png', 
-#                     'theme': 'ThoughtfulLearning', 
-#                     'categoryIds': ['406', '430'], 
-#                     'categoryNames': ['Awards', 'Training/workshop'], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': '42.390840', 
-#                     'longitude': '-72.527650', 
-#                     'recScore': None, 
-#                     '@search.score': 78.43786}, 
-                   
-#                    {'id': '9095710', 
-#                     'institutionId': 33, 
-#                     'organizationId': 18552, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'UMass Theatre Guild', 
-#                     'organizationProfilePicture': '4350f49b-aca2-467f-898f-94cbc7076074f9c70f28-7c35-4854-b275-27b802aa1103.jpg', 'organizationNames': [], 
-#                     'name': "UMTG's Fall 2023 Play (Tech Week)", 
-#                     'description': "<p>UMass Theatre Guild's fall play tech week</p>", 
-#                     'location': 'Bowker Auditorium 9am to 5pm each day', 
-#                     'startsOn': '2023-11-12T14:00:00+00:00', 
-#                     'endsOn': '2023-11-15T22:00:00+00:00', 
-#                     'imagePath': '786b5b31-e561-473c-ae03-70f64644d09e01464f69-97e4-4e98-a692-c9114f6b8564.png', 
-#                     'theme': 'Arts', 
-#                     'categoryIds': ['425', '428'], 
-#                     'categoryNames': ['Performance', 'Rehearsal/Practice'], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 74.601006},
-                   
-#                    {'id': '9095830', 
-#                     'institutionId': 33, 
-#                     'organizationId': 18552, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'UMass Theatre Guild', 
-#                     'organizationProfilePicture': '4350f49b-aca2-467f-898f-94cbc7076074f9c70f28-7c35-4854-b275-27b802aa1103.jpg', 'organizationNames': [], 
-#                     'name': "UMTG's Fall 2023 Play (Performances)", 
-#                     'description': "<p>UMass Theatre Guild's fall play performances</p>", 
-#                     'location': 'Bowker Auditorium', 
-#                     'startsOn': '2023-11-16T22:00:00+00:00', 
-#                     'endsOn': '2023-11-17T03:00:00+00:00', 
-#                     'imagePath': 'fd2cccac-41e8-4d0c-a3e6-4364138234775cc6a637-6772-4ae5-a644-dcb1e2ff155e.png', 
-#                     'theme': 'Arts', 
-#                     'categoryIds': [], 
-#                     'categoryNames': [], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 73.763535}, 
-                   
-#                    {'id': '9095831', 
-#                     'institutionId': 33, 
-#                     'organizationId': 18552, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'UMass Theatre Guild', 
-#                     'organizationProfilePicture': '4350f49b-aca2-467f-898f-94cbc7076074f9c70f28-7c35-4854-b275-27b802aa1103.jpg', 'organizationNames': [], 
-#                     'name': "UMTG's Fall 2023 Play (Performances)", 
-#                     'description': "<p>UMass Theatre Guild's fall play performances</p>", 
-#                     'location': 'Bowker Auditorium', 
-#                     'startsOn': '2023-11-17T22:00:00+00:00', 
-#                     'endsOn': '2023-11-18T03:00:00+00:00', 
-#                     'imagePath': 'fd2cccac-41e8-4d0c-a3e6-4364138234775cc6a637-6772-4ae5-a644-dcb1e2ff155e.png', 
-#                     'theme': 'Arts', 
-#                     'categoryIds': [], 
-#                     'categoryNames': [], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 73.56793}, 
-                   
-#                    {'id': '9095832', 
-#                     'institutionId': 33, 
-#                     'organizationId': 18552, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'UMass Theatre Guild', 
-#                     'organizationProfilePicture': '4350f49b-aca2-467f-898f-94cbc7076074f9c70f28-7c35-4854-b275-27b802aa1103.jpg', 'organizationNames': [], 
-#                     'name': "UMTG's Fall 2023 Play (Performances)", 
-#                     'description': "<p>UMass Theatre Guild's fall play performances</p>", 
-#                     'location': 'Bowker Auditorium', 
-#                     'startsOn': '2023-11-18T16:00:00+00:00', 
-#                     'endsOn': '2023-11-18T21:00:00+00:00', 
-#                     'imagePath': 'fd2cccac-41e8-4d0c-a3e6-4364138234775cc6a637-6772-4ae5-a644-dcb1e2ff155e.png', 
-#                     'theme': 'Arts', 
-#                     'categoryIds': [], 
-#                     'categoryNames': [], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 73.42065}, 
-                   
-#                    {'id': '9095833', 
-#                     'institutionId': 33, 
-#                     'organizationId': 18552, 
-#                     'organizationIds': [], 
-#                     'branchId': 18308, 
-#                     'branchIds': [], 
-#                     'organizationName': 'UMass Theatre Guild', 
-#                     'organizationProfilePicture': '4350f49b-aca2-467f-898f-94cbc7076074f9c70f28-7c35-4854-b275-27b802aa1103.jpg', 'organizationNames': [], 
-#                     'name': "UMTG's Fall 2023 Play (Performances)", 
-#                     'description': "<p>UMass Theatre Guild's fall play performances</p>", 
-#                     'location': 'Bowker Auditorium', 
-#                     'startsOn': '2023-11-18T23:30:00+00:00', 
-#                     'endsOn': '2023-11-19T03:00:00+00:00', 
-#                     'imagePath': 'fd2cccac-41e8-4d0c-a3e6-4364138234775cc6a637-6772-4ae5-a644-dcb1e2ff155e.png', 
-#                     'theme': 'Arts', 
-#                     'categoryIds': [], 
-#                     'categoryNames': [], 
-#                     'benefitNames': [], 
-#                     'visibility': 'Public', 
-#                     'status': 'Approved', 
-#                     'latitude': None, 
-#                     'longitude': None, 
-#                     'recScore': None, 
-#                     '@search.score': 73.35912}]
-###########################################################################################################
+    time.sleep(1)    
+    elapsed_time = time.time() - start_time
+    if elapsed_time >= timeout_timer:
+        print("timeout; scheduled jobs have either been completed or interrupted by this timeout timer, which is currently set to: " + str(timeout_timer) + "seconds")
+        break  
